@@ -1,0 +1,131 @@
+.global-navbar {
+  width: 100%;
+  left: 0;
+  right: 0;
+  background: var(--surface-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(123, 44, 191, 0.1);
+  position: fixed;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  height: 70px;
+}
+
+.nav-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.nav-content-fluid {
+  width: 100%;
+  padding: 0 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.navbar-logo {
+  font-size: 1.6rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--primary-purple) 0%, var(--accent-pink) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.navbar-logo:hover {
+  opacity: 0.8;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.navbar-links a {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+  white-space: nowrap; /* Evita que el texto se rompa en dos líneas */
+}
+
+.navbar-links a:hover {
+  color: var(--primary-purple);
+}
+
+.navbar-btn {
+  background: var(--accent-pink);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(247, 37, 133, 0.3);
+  transition: all 0.3s ease;
+}
+
+.navbar-btn:hover {
+  background: var(--primary-purple);
+  box-shadow: 0 6px 20px rgba(123, 44, 191, 0.4);
+  transform: translateY(-2px);
+}
+
+.navbar-btn-logout {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid rgba(123, 44, 191, 0.3);
+  padding: 8px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.navbar-btn-logout:hover {
+  background: var(--background-global);
+  color: var(--accent-pink);
+  border-color: var(--accent-pink);
+}
+
+@media (max-width: 768px) {
+  .navbar-links a {
+    display: none;
+  }
+}
+
+.theme-toggle-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--surface-card);
+  color: var(--primary-purple);
+  transform: rotate(15deg);
+}

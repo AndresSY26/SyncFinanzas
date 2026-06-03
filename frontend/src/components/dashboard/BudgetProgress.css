@@ -1,0 +1,68 @@
+.budget-card {
+  height: fit-content;
+}
+
+.card-title {
+  margin-top: 0;
+  border-bottom: 2px solid rgba(123, 44, 191, 0.2);
+  padding-bottom: 10px;
+  color: var(--text-primary);
+}
+
+.budget-bars-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 10px;
+}
+
+.empty-msg {
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.budget-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.budget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.budget-cat {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.budget-amounts {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.progress-bg {
+  width: 100%;
+  height: 12px;
+  background-color: var(--background-global);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bar-normal {
+  background: linear-gradient(90deg, var(--primary-purple) 0%, #a461e3 100%);
+}
+
+.bar-warning {
+  background: linear-gradient(90deg, var(--accent-pink) 0%, #ff529a 100%);
+}

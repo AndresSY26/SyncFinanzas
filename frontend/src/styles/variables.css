@@ -1,0 +1,19 @@
+:root {
+  --primary-purple: #7b2cbf;
+  --primary-dark: #3c096c;
+  --accent-pink: #f72585;
+  
+  /* Light Mode */
+  --background-global: #f8f7ff;
+  --text-primary: #2b2d42;
+  --surface-card: #ffffff;
+  --text-secondary: #6c757d;
+}
+
+html.dark {
+  /* Dark Mode */
+  --background-global: #0f0f11;
+  --text-primary: #f1f1f4;
+  --surface-card: #1c1c21;
+  --text-secondary: #a0a0b0;
+}

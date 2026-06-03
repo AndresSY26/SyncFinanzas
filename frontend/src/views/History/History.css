@@ -1,0 +1,113 @@
+.empty-history-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-card);
+  padding: 50px 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 20px rgba(123, 44, 191, 0.08);
+  text-align: center;
+  margin-top: 20px;
+}
+
+.detailed-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.detailed-history-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface-card);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.detailed-history-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(123, 44, 191, 0.08);
+}
+
+.dh-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.dh-icon {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.bg-cyan-light {
+  background: rgba(76, 201, 240, 0.15);
+  color: #4cc9f0;
+}
+
+.bg-pink-light {
+  background: rgba(123, 44, 191, 0.1);
+  color: var(--primary-purple); /* Usamos el purple corporativo o pink */
+}
+
+.dh-details h4 {
+  margin: 0 0 5px 0;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+}
+
+.dh-date {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.dh-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.dh-pill {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pill-income {
+  background: rgba(76, 201, 240, 0.1);
+  color: #4cc9f0;
+  border: 1px solid rgba(76, 201, 240, 0.3);
+}
+
+.pill-expense {
+  background: rgba(123, 44, 191, 0.1);
+  color: var(--primary-purple);
+  border: 1px solid rgba(123, 44, 191, 0.2);
+}
+
+.dh-amount {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.text-cyan {
+  color: #4cc9f0;
+}
+
+.text-pink {
+  color: var(--accent-pink);
+}

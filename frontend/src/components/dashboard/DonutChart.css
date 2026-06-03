@@ -1,0 +1,100 @@
+.donut-card {
+  height: fit-content;
+}
+
+.donut-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding-top: 15px;
+}
+
+.donut-svg-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+}
+
+.donut-svg {
+  transform: rotate(-90deg); /* Empezar desde arriba */
+  overflow: visible;
+}
+
+.donut-base {
+  fill: transparent;
+  stroke: var(--background-global);
+  stroke-width: 20;
+}
+
+.donut-segment {
+  fill: transparent;
+  stroke-width: 20;
+  transition: stroke-dasharray 1s ease-out, stroke-dashoffset 1s ease-out;
+  cursor: pointer;
+}
+
+.donut-segment:hover {
+  stroke-width: 24;
+  opacity: 0.9;
+}
+
+.donut-center-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.donut-total-lbl {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.donut-total-val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.donut-legend {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.legend-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.legend-amt {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
