@@ -1,6 +1,6 @@
-import pool from '../db/index.js';
-import { appEvents } from '../utils/eventEmitter.js';
-import { budgetService } from './budgetService.js';
+import pool from '../../config/database.js';
+import { appEvents } from '../../utils/eventEmitter.js';
+import { budgetService } from '../budgets/budget.service.js';
 
 export const transactionService = {
   /**

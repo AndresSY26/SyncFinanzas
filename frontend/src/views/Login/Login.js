@@ -16,6 +16,9 @@ export const renderLogin = (container) => {
             <input type="password" id="loginPassword" class="auth-input" placeholder="Contraseña">
           </div>
           <button type="submit" class="auth-btn">Ingresar al Dashboard</button>
+
+          <div class="auth-divider">o continúa con</div>
+          <div id="google-btn-login" class="google-btn-container"></div>
         </form>
 
         <form id="registerForm" class="auth-form" style="display: none;" novalidate>
@@ -32,6 +35,9 @@ export const renderLogin = (container) => {
             <input type="password" id="regPassword" class="auth-input" placeholder="Contraseña">
           </div>
           <button type="submit" class="auth-btn">Crear Cuenta</button>
+
+          <div class="auth-divider">o continúa con</div>
+          <div id="google-btn-register" class="google-btn-container"></div>
         </form>
 
         <p class="auth-footer">
@@ -152,4 +158,56 @@ export const renderLogin = (container) => {
       showNotification(error.message, 'error');
     }
   });
+
+  // --- Integración Real de Google One Tap y Botón ---
+  window.handleGoogleCallback = async (response) => {
+    try {
+      await authService.authenticateWithGoogleToken(response.credential);
+      showNotification('¡Sesión iniciada exitosamente con Google!', 'success');
+    } catch (error) {
+      triggerErrorFeedback();
+      showNotification(error.message, 'error');
+    }
+  };
+
+  window.initGoogleAuth = () => {
+    window.google.accounts.id.initialize({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      callback: window.handleGoogleCallback,
+      context: 'use'
+    });
+
+    const googleBtnConfig = { 
+      theme: 'filled_black',
+      size: 'large',
+      shape: 'pill',
+      width: 350,
+      text: 'continue_with'
+    };
+    const btnLoginDiv = document.getElementById('google-btn-login');
+    const btnRegisterDiv = document.getElementById('google-btn-register');
+
+    if (btnLoginDiv) {
+      window.google.accounts.id.renderButton(btnLoginDiv, googleBtnConfig);
+    }
+    if (btnRegisterDiv) {
+      window.google.accounts.id.renderButton(btnRegisterDiv, googleBtnConfig);
+    }
+
+    // Iniciar One Tap Automático
+    window.google.accounts.id.prompt();
+  };
+
+  // Inyectar Script GSI si no existe
+  if (!document.getElementById('gsi-script')) {
+    const script = document.createElement('script');
+    script.id = 'gsi-script';
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = window.initGoogleAuth;
+    document.head.appendChild(script);
+  } else if (window.google) {
+    window.initGoogleAuth();
+  }
 };

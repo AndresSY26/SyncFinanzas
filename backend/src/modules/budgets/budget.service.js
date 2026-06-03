@@ -1,5 +1,5 @@
-import pool from '../db/index.js';
-import { appEvents } from '../utils/eventEmitter.js';
+import pool from '../../config/database.js';
+import { appEvents } from '../../utils/eventEmitter.js';
 
 export const budgetService = {
   createBudget: async ({ usuario_id, categoria, monto_limite }) => {

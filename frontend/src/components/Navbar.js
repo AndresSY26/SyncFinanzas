@@ -57,9 +57,10 @@ export const Navbar = {
       document.getElementById('btnGlobalLogout').addEventListener('click', () => {
         authService.logout();
       });
+    }
 
-      // Theme toggle logic
-      const themeBtn = document.getElementById('theme-toggle-btn');
+    // Theme toggle logic (Funciona siempre, con o sin token)
+    const themeBtn = document.getElementById('theme-toggle-btn');
       if (themeBtn) {
         themeBtn.addEventListener('click', () => {
           appStore.toggleTheme();
@@ -74,8 +75,9 @@ export const Navbar = {
         };
 
         appStore.addEventListener('theme_changed', updateThemeIcon);
-      }
+    }
 
+    if (token) {
       // Update Nav balance reacting to appStore
       const navBalanceDisplay = document.getElementById('navBalanceDisplay');
       

@@ -21,6 +21,15 @@ export const authService = {
     return data;
   },
 
+  authenticateWithGoogleToken: async (idToken) => {
+    const data = await apiClient('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken })
+    });
+    authService.initSession(data.token);
+    return data;
+  },
+
   initSession: (token) => {
     localStorage.setItem('jwtToken', token);
     SocketClient.connect(token);

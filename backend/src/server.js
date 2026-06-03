@@ -3,10 +3,9 @@ import http from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import { connectDB } from './db/index.js';
-import { initDB } from './db/init.js';
+import { connectDB, initDB } from './config/database.js';
 import { setupSockets } from './socket/index.js';
-import authRoutes from './routes/authRoutes.js';
+import authRoutes from './modules/auth/auth.routes.js';
 
 // Cargar variables de entorno
 dotenv.config();

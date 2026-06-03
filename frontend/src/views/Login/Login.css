@@ -89,6 +89,59 @@
      aquí solo ajustamos el padding específico para auth */
 }
 
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 15px 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(123, 44, 191, 0.2);
+}
+
+.auth-divider::before {
+  margin-right: 15px;
+}
+
+.auth-divider::after {
+  margin-left: 15px;
+}
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid rgba(123, 44, 191, 0.2);
+  border-radius: 9999px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-google:hover {
+  background: rgba(123, 44, 191, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(123, 44, 191, 0.15);
+}
+
+.google-icon {
+  width: 22px;
+  height: 22px;
+}
+
 .auth-footer {
   margin-top: 25px;
   font-size: 0.95rem;
@@ -122,4 +175,11 @@
   20%, 80% { transform: translate3d(4px, 0, 0); }
   30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
   40%, 60% { transform: translate3d(6px, 0, 0); }
+}
+
+/* Estilos para el botón oficial nativo de Google */
+#google-btn-login, #google-btn-register {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }

@@ -124,11 +124,11 @@ button:hover {
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid rgba(123, 44, 191, 0.2);
   transition: background-color 0.2s ease;
 }
 .history-item:hover {
-  background-color: #faf9ff;
+  background-color: rgba(123, 44, 191, 0.05);
 }
 .history-item:last-child {
   border-bottom: none;
@@ -140,7 +140,7 @@ button:hover {
 .tx-cat {
   font-weight: 600;
   font-size: 1.1rem;
-  color: var(--primary-dark);
+  color: var(--text-primary);
 }
 .tx-desc {
   font-size: 0.9rem;

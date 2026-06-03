@@ -1,4 +1,4 @@
-import { transactionService } from '../../services/transactionService.js';
+import { transactionService } from '../../modules/transactions/transaction.service.js';
 import { appEvents } from '../../utils/eventEmitter.js';
 import { sessionManager } from '../sessionManager.js';
 

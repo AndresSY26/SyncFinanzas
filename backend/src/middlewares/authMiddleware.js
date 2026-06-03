@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import pool from '../config/database.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_key_change_me';
 

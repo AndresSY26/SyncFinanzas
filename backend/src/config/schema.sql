@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     nombre_completo VARCHAR(150) NOT NULL,
+    is_social_login BOOLEAN DEFAULT false,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -13,7 +13,9 @@ export const apiClient = async (endpoint, options = {}) => {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.error || 'Error en la petición API');
+    const error = new Error(data.error || 'Error en la petición API');
+    error.data = data;
+    throw error;
   }
 
   return data;
