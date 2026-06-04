@@ -27,7 +27,12 @@ class AppStore extends EventTarget {
   }
 
   addPaymentMethod(method) {
-    this.state.paymentMethods.push(method);
+    this.state.paymentMethods.unshift(method);
+    this.dispatchEvent(new CustomEvent('payment_methods_changed', { detail: this.state.paymentMethods }));
+  }
+
+  setPaymentMethods(methods) {
+    this.state.paymentMethods = methods;
     this.dispatchEvent(new CustomEvent('payment_methods_changed', { detail: this.state.paymentMethods }));
   }
 

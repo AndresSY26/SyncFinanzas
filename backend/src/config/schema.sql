@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     nombre VARCHAR(100) NOT NULL,
     tipo VARCHAR(50) NOT NULL,
     balance_inicial NUMERIC(15, 2) DEFAULT 0,
+    detalles JSONB DEFAULT '{}'::jsonb,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

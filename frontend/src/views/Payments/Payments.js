@@ -1,6 +1,7 @@
 import './Payments.css';
 import { appStore } from '../../store/appStore.js';
 import { showNotification } from '../../components/common/Toast.js';
+import { SocketClient } from '../../core/socket.js';
 
 export const renderPayments = (container) => {
   let modalActiveTab = 'billetera';
@@ -85,112 +86,122 @@ export const renderPayments = (container) => {
       html += `</div>`;
     }
 
-    container.innerHTML = html;
-    ensureModalExists();
-    attachEvents();
-  };
-
-  const ensureModalExists = () => {
-    if (document.getElementById('paymentModalOverlay')) return;
-
-    const modalHtml = `
-      <div id="paymentModalOverlay" class="modal-overlay" style="display: none;">
-        <div class="modal-content fade-up-enter" id="paymentModalContent">
-          <div class="modal-header">
-            <h3>Vincular Cuenta o Billetera</h3>
-            <button class="close-modal-btn" id="btnCloseModal">&times;</button>
+    // Modal inyectado directamente en el contenedor local
+    html += `
+      <div id="paymentModalOverlay" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
+        <div class="modal-content fade-up-enter" id="paymentModalContent" style="background: var(--surface-card); width: 90%; max-width: 500px; border-radius: 20px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05);">
+          <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: var(--text-primary);">Vincular Cuenta o Billetera</h3>
+            <button class="close-modal-btn" id="btnCloseModal" style="background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer;">&times;</button>
           </div>
           
-          <div class="modal-tabs">
-            <button class="pill-tab active" data-tab="billetera">Billetera Digital</button>
-            <button class="pill-tab" data-tab="tarjeta">Tarjeta</button>
-            <button class="pill-tab" data-tab="banco">Cuenta Bancaria</button>
+          <div class="modal-tabs" style="display: flex; gap: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 12px;">
+            <button class="pill-tab active" data-tab="billetera" style="flex: 1; padding: 10px; border: none; border-radius: 8px; background: var(--accent-primary); color: white; cursor: pointer; transition: 0.3s;">Billetera Digital</button>
+            <button class="pill-tab" data-tab="tarjeta" style="flex: 1; padding: 10px; border: none; border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; transition: 0.3s;">Tarjeta</button>
+            <button class="pill-tab" data-tab="banco" style="flex: 1; padding: 10px; border: none; border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; transition: 0.3s;">Banco</button>
           </div>
 
           <div class="modal-body">
             <form id="paymentForm">
               <div id="form-billetera" class="tab-content active">
-                <div class="input-group">
-                  <select id="billPlatform" class="auth-input">
-                    <option value="">Selecciona la Plataforma...</option>
-                    <option value="Nequi">Nequi</option>
-                    <option value="Daviplata">Daviplata</option>
-                    <option value="PayPal">PayPal</option>
+                <div class="input-group" style="margin-bottom: 15px;">
+                  <select id="billPlatform" class="auth-input" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;">
+                    <option value="" style="color: black;">Selecciona la Plataforma...</option>
+                    <option value="Nequi" style="color: black;">Nequi</option>
+                    <option value="Daviplata" style="color: black;">Daviplata</option>
+                    <option value="PayPal" style="color: black;">PayPal</option>
                   </select>
                 </div>
-                <div class="input-group">
-                  <input type="text" id="billId" class="auth-input" placeholder="Número de Celular o Email">
+                <div class="input-group" style="margin-bottom: 15px;">
+                  <input type="text" id="billId" class="auth-input" placeholder="Número de Celular o Email" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; box-sizing: border-box;">
                 </div>
               </div>
 
               <div id="form-tarjeta" class="tab-content" style="display: none;">
-                <div class="input-group">
-                  <input type="text" id="cardNumber" class="auth-input" placeholder="Número de Tarjeta (16 dígitos)">
+                <div class="input-group" style="margin-bottom: 15px;">
+                  <input type="text" id="cardNumber" class="auth-input" placeholder="Número de Tarjeta (16 dígitos)" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; box-sizing: border-box;">
                 </div>
-                <div class="input-group">
-                  <input type="text" id="cardHolder" class="auth-input" placeholder="Nombre del Titular">
+                <div class="input-group" style="margin-bottom: 15px;">
+                  <input type="text" id="cardHolder" class="auth-input" placeholder="Nombre del Titular" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; box-sizing: border-box;">
                 </div>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                   <div class="input-group" style="flex: 1;">
-                    <input type="text" id="cardExpiry" class="auth-input" placeholder="MM/YY">
+                    <input type="text" id="cardExpiry" class="auth-input" placeholder="MM/YY" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; box-sizing: border-box;">
                   </div>
                   <div class="input-group" style="flex: 1;">
-                    <input type="text" id="cardCvv" class="auth-input" placeholder="CVV">
+                    <input type="text" id="cardCvv" class="auth-input" placeholder="CVV" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; box-sizing: border-box;">
                   </div>
                 </div>
               </div>
 
               <div id="form-banco" class="tab-content" style="display: none;">
-                <div class="input-group">
-                  <select id="bankName" class="auth-input">
-                    <option value="">Selecciona el Banco...</option>
-                    <option value="Bancolombia">Bancolombia</option>
-                    <option value="Davivienda">Davivienda</option>
-                    <option value="Banco de Bogotá">Banco de Bogotá</option>
-                    <option value="BBVA">BBVA</option>
+                <div class="input-group" style="margin-bottom: 15px;">
+                  <select id="bankName" class="auth-input" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;">
+                    <option value="" style="color: black;">Selecciona el Banco...</option>
+                    <option value="Bancolombia" style="color: black;">Bancolombia</option>
+                    <option value="Davivienda" style="color: black;">Davivienda</option>
+                    <option value="Banco de Bogotá" style="color: black;">Banco de Bogotá</option>
+                    <option value="BBVA" style="color: black;">BBVA</option>
                   </select>
                 </div>
-                <div class="input-group">
-                  <select id="bankAccType" class="auth-input">
-                    <option value="">Tipo de Cuenta...</option>
-                    <option value="Ahorros">Ahorros</option>
-                    <option value="Corriente">Corriente</option>
+                <div class="input-group" style="margin-bottom: 15px;">
+                  <select id="bankAccType" class="auth-input" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;">
+                    <option value="" style="color: black;">Tipo de Cuenta...</option>
+                    <option value="Ahorros" style="color: black;">Ahorros</option>
+                    <option value="Corriente" style="color: black;">Corriente</option>
                   </select>
                 </div>
-                <div class="input-group">
-                  <input type="text" id="bankAccNumber" class="auth-input" placeholder="Número de Cuenta">
+                <div class="input-group" style="margin-bottom: 15px;">
+                  <input type="text" id="bankAccNumber" class="auth-input" placeholder="Número de Cuenta" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; box-sizing: border-box;">
                 </div>
               </div>
 
-              <button type="submit" class="auth-btn" style="margin-top: 15px;">Guardar Cuenta o Billetera</button>
+              <button type="submit" class="auth-btn" style="width: 100%; padding: 14px; border-radius: 12px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-pink)); color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 15px;">Guardar Cuenta o Billetera</button>
             </form>
           </div>
         </div>
       </div>
     `;
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = modalHtml;
-    document.body.appendChild(wrapper.firstElementChild);
-  };
 
-  const attachEvents = () => {
-    // Buscar en document ya que el modal ahora es global (Portal)
-    const getOverlay = () => document.getElementById('paymentModalOverlay');
-    const getForm = () => document.getElementById('paymentForm');
+    container.innerHTML = html;
+    
+    // Asignación explícita de referencias DESPUÉS de inyectar al DOM
+    const btnOpen = container.querySelector('#btnOpenModal');
+    const btnOpenEmpty = container.querySelector('#btnOpenModalEmpty');
+    const btnClose = container.querySelector('#btnCloseModal');
+    const overlay = container.querySelector('#paymentModalOverlay');
+    const modalContent = container.querySelector('#paymentModalContent');
+    const form = container.querySelector('#paymentForm');
+    const tabs = container.querySelectorAll('.pill-tab');
+
+    const openModal = () => {
+      if (overlay) overlay.style.display = 'flex';
+      if (form) form.reset();
+      switchTab('billetera');
+    };
+
+    const closeModal = () => {
+      if (overlay) overlay.style.display = 'none';
+    };
 
     const switchTab = (tabId) => {
-      const overlay = getOverlay();
-      if (!overlay) return;
-      const tabs = overlay.querySelectorAll('.pill-tab');
-      tabs.forEach(t => t.classList.remove('active'));
+      tabs.forEach(t => {
+        t.classList.remove('active');
+        t.style.background = 'transparent';
+        t.style.color = 'var(--text-secondary)';
+      });
       const activeTab = Array.from(tabs).find(t => t.dataset.tab === tabId);
-      if (activeTab) activeTab.classList.add('active');
+      if (activeTab) {
+        activeTab.classList.add('active');
+        activeTab.style.background = 'var(--accent-primary)';
+        activeTab.style.color = 'white';
+      }
 
-      overlay.querySelectorAll('.tab-content').forEach(tc => {
+      container.querySelectorAll('.tab-content').forEach(tc => {
         tc.style.display = 'none';
         tc.classList.remove('active');
       });
-      const activeContent = overlay.querySelector('#form-' + tabId);
+      const activeContent = container.querySelector('#form-' + tabId);
       if (activeContent) {
         activeContent.style.display = 'block';
         activeContent.classList.add('active');
@@ -198,61 +209,26 @@ export const renderPayments = (container) => {
       modalActiveTab = tabId;
     };
 
-    const openModal = () => {
-      const overlay = getOverlay();
-      const form = getForm();
-      if (overlay) overlay.style.display = 'flex';
-      if (form) form.reset();
-      modalActiveTab = 'billetera';
-      switchTab('billetera');
-    };
+    // Mapeo seguro de eventos (sin depender de window u onclicks perdidos)
+    if (btnOpen) btnOpen.addEventListener('click', openModal);
+    if (btnOpenEmpty) btnOpenEmpty.addEventListener('click', openModal);
+    if (btnClose) btnClose.addEventListener('click', closeModal);
+    if (overlay) overlay.addEventListener('click', closeModal);
+    if (modalContent) modalContent.addEventListener('click', (e) => e.stopPropagation());
 
-    const closeModal = () => {
-      const overlay = getOverlay();
-      if (overlay) overlay.style.display = 'none';
-    };
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
 
-    // Limpiar manejadores previos en re-renders para evitar loops y memory leaks
-    if (container._paymentClickHandler) {
-      container.removeEventListener('click', container._paymentClickHandler);
-    }
-    if (container._paymentSubmitHandler) {
-      container.removeEventListener('submit', container._paymentSubmitHandler);
-    }
-
-    // Delegación de Eventos de Clic
-    container._paymentClickHandler = (e) => {
-      const btnOpen = e.target.closest('#btnOpenModal');
-      const btnOpenEmpty = e.target.closest('#btnOpenModalEmpty');
-      const btnClose = e.target.closest('#btnCloseModal');
-      const tab = e.target.closest('.pill-tab');
-      const overlay = getOverlay();
-
-      if (btnOpen || btnOpenEmpty) {
-        openModal();
-      } else if (btnClose || (overlay && e.target === overlay)) {
-        closeModal();
-      } else if (tab && overlay && overlay.contains(tab)) {
-        switchTab(tab.dataset.tab);
-      }
-    };
-    
-    // Escuchar clicks tanto en el container como en el document (para el modal)
-    document.addEventListener('click', container._paymentClickHandler);
-
-    // Delegación de Eventos de Formulario (Submit)
-    container._paymentSubmitHandler = (e) => {
-      const form = getForm();
-      if (form && e.target === form) {
+    if (form) {
+      form.addEventListener('submit', (e) => {
         e.preventDefault();
         let newMethod = { type: modalActiveTab };
 
         if (modalActiveTab === 'billetera') {
           const platform = form.querySelector('#billPlatform').value;
           const id = form.querySelector('#billId').value.trim();
-          if (!platform || !id) {
-            return showNotification('Por favor completa la plataforma y el identificador.', 'error');
-          }
+          if (!platform || !id) return showNotification('Por favor completa la plataforma y el identificador.', 'error');
           newMethod.platform = platform;
           newMethod.identifier = id;
         } else if (modalActiveTab === 'tarjeta') {
@@ -260,9 +236,7 @@ export const renderPayments = (container) => {
           const holder = form.querySelector('#cardHolder').value.trim();
           const exp = form.querySelector('#cardExpiry').value.trim();
           const cvv = form.querySelector('#cardCvv').value.trim();
-          if (!num || !holder || !exp || !cvv) {
-            return showNotification('Por favor completa todos los datos de la tarjeta.', 'error');
-          }
+          if (!num || !holder || !exp || !cvv) return showNotification('Por favor completa todos los datos de la tarjeta.', 'error');
           newMethod.number = num;
           newMethod.holder = holder;
           newMethod.expiry = exp;
@@ -270,51 +244,30 @@ export const renderPayments = (container) => {
           const bank = form.querySelector('#bankName').value;
           const accType = form.querySelector('#bankAccType').value;
           const accNum = form.querySelector('#bankAccNumber').value.trim();
-          if (!bank || !accType || !accNum) {
-            return showNotification('Por favor selecciona el banco y detalla la cuenta.', 'error');
-          }
+          if (!bank || !accType || !accNum) return showNotification('Por favor selecciona el banco y detalla la cuenta.', 'error');
           newMethod.bank = bank;
           newMethod.accountType = accType;
           newMethod.accountNumber = accNum;
         }
 
-        appStore.addPaymentMethod(newMethod);
-        showNotification('Cuenta o Billetera vinculada exitosamente', 'success');
-        closeModal();
-      }
-    };
-    document.addEventListener('submit', container._paymentSubmitHandler);
-
-    // Cerrar con Escape
-    const handleEsc = (e) => {
-      const overlay = getOverlay();
-      if (e.key === 'Escape' && overlay && overlay.style.display === 'flex') {
-        closeModal();
-      }
-    };
-    document.addEventListener('keydown', handleEsc);
-
-    container.addEventListener('DOMNodeRemoved', (e) => {
-      if (e.target === container) {
-        document.removeEventListener('keydown', handleEsc);
-        document.removeEventListener('click', container._paymentClickHandler);
-        document.removeEventListener('submit', container._paymentSubmitHandler);
+        const socket = SocketClient.getSocket();
+        if (socket) {
+          socket.emit('account:create', newMethod);
+        } else {
+          showNotification('Error de conexión en tiempo real', 'error');
+        }
         
-        // Limpiar el modal del body al salir de la vista
-        const overlay = document.getElementById('paymentModalOverlay');
-        if (overlay) overlay.remove();
-      }
-    });
+        closeModal();
+      });
+    }
   };
 
-  // Re-render when payment methods change
   const handlePaymentChange = () => {
     renderContent();
   };
 
   appStore.addEventListener('payment_methods_changed', handlePaymentChange);
   
-  // Cleanup listener when navigating away (though container innerHTML will destroy the view)
   const observer = new MutationObserver(() => {
     if (!document.contains(container)) {
       appStore.removeEventListener('payment_methods_changed', handlePaymentChange);

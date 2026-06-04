@@ -30,6 +30,15 @@ export const SocketClient = {
       appStore.setTransactions(txs);
     });
 
+    socketInstance.on('account:list_success', (accounts) => {
+      appStore.setPaymentMethods(accounts);
+    });
+
+    socketInstance.on('account:created_success', (account) => {
+      // Opcional si dependemos de list_success, pero lo añadimos por reactividad inmediata
+      appStore.addPaymentMethod(account);
+    });
+
     socketInstance.on('transaction:created_success', (tx) => {
       appStore.addTransaction(tx);
     });
