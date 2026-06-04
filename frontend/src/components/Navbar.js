@@ -1,6 +1,7 @@
 import { Router } from '../core/router.js';
 import { authService } from '../services/authService.js';
 import { appStore } from '../store/appStore.js';
+import { formatCurrency } from '../utils/formatters.js';
 import './Navbar.css';
 
 export const Navbar = {
@@ -84,10 +85,13 @@ export const Navbar = {
       const updateNavBalance = (e) => {
         if (!navBalanceDisplay) return;
         const bal = e.detail.currentBalance;
-        navBalanceDisplay.innerText = `Balance: $${bal.toFixed(2)}`;
-        navBalanceDisplay.style.color = bal < 0 ? '#f72585' : '#7b2cbf';
-        navBalanceDisplay.style.fontWeight = 'bold';
-        navBalanceDisplay.style.marginRight = '15px';
+        navBalanceDisplay.innerText = `Balance: ${formatCurrency(bal)}`;
+        
+        // Aplicar la animación RGB dinámica limpiando estilos estáticos previos
+        navBalanceDisplay.className = 'navbar-balance rgb-text-balance';
+        navBalanceDisplay.style.color = '';
+        navBalanceDisplay.style.fontWeight = '';
+        navBalanceDisplay.style.marginRight = '';
       };
 
       appStore.addEventListener('balance_changed', updateNavBalance);

@@ -8,9 +8,19 @@ CREATE TABLE IF NOT EXISTS users (
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS accounts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    nombre VARCHAR(100) NOT NULL,
+    tipo VARCHAR(50) NOT NULL,
+    balance_inicial NUMERIC(15, 2) DEFAULT 0,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    cuenta_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
     tipo VARCHAR(50) NOT NULL CHECK (tipo IN ('income', 'expense')),
     monto NUMERIC(15, 2) NOT NULL,
     categoria VARCHAR(100) NOT NULL,

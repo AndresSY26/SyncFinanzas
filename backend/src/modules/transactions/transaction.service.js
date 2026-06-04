@@ -7,13 +7,13 @@ export const transactionService = {
    * Crea un nuevo registro financiero en la base de datos 
    * y emite internamente un evento para notificar que el balance cambió.
    */
-  createTransaction: async ({ usuario_id, tipo, monto, categoria, descripcion }) => {
+  createTransaction: async ({ usuario_id, cuenta_id, tipo, monto, categoria, descripcion }) => {
     const query = `
-      INSERT INTO transactions (usuario_id, tipo, monto, categoria, descripcion)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO transactions (usuario_id, cuenta_id, tipo, monto, categoria, descripcion)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;
     `;
-    const values = [usuario_id, tipo, monto, categoria, descripcion];
+    const values = [usuario_id, cuenta_id || null, tipo, monto, categoria, descripcion];
     
     try {
       const result = await pool.query(query, values);

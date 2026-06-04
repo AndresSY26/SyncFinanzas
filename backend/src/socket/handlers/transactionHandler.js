@@ -72,6 +72,7 @@ export const registerTransactionHandlers = (io, socket) => {
       // Inyectamos el usuario desde el token/middleware
       const newTx = await transactionService.createTransaction({
         usuario_id: socket.userId, // Obligamos a que use el ID del token seguro
+        cuenta_id: payload.cuenta_id, // Nuevo campo de relacion con metodo de pago
         tipo: payload.tipo,
         monto: parseFloat(payload.monto), // Parseo defensivo en el backend también
         categoria: payload.categoria,

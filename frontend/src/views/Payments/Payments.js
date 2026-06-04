@@ -10,8 +10,8 @@ export const renderPayments = (container) => {
     
     let html = `
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-        <h2 style="margin: 0; color: var(--text-primary);">Cuentas y Métodos de Pago</h2>
-        ${methods.length > 0 ? '<button class="add-payment-btn" id="btnOpenModal">+ Vincular Método</button>' : ''}
+        <h2 style="margin: 0; color: var(--text-primary);">Mis Cuentas y Tarjetas</h2>
+        ${methods.length > 0 ? '<button class="add-payment-btn" id="btnOpenModal">+ Vincular Cuenta</button>' : ''}
       </div>
     `;
 
@@ -19,9 +19,9 @@ export const renderPayments = (container) => {
       html += `
         <div class="empty-payments-state">
           <div class="empty-icon">💳</div>
-          <h3 style="color: var(--text-primary); margin-bottom: 10px;">No tienes cuentas ni métodos de pago vinculados aún</h3>
+          <h3 style="color: var(--text-primary); margin-bottom: 10px;">No tienes cuentas ni billeteras vinculadas aún</h3>
           <p style="color: var(--text-secondary); margin-top: 0; margin-bottom: 25px;">Agrega tu primera tarjeta o billetera virtual para gestionar tus finanzas de forma integral.</p>
-          <button class="add-payment-btn empty-btn" id="btnOpenModalEmpty">+ Vincular Método de Pago</button>
+          <button class="add-payment-btn empty-btn" id="btnOpenModalEmpty">+ Vincular Cuenta o Billetera</button>
         </div>
       `;
     } else {
@@ -85,12 +85,19 @@ export const renderPayments = (container) => {
       html += `</div>`;
     }
 
-    // Modal UI
-    html += `
+    container.innerHTML = html;
+    ensureModalExists();
+    attachEvents();
+  };
+
+  const ensureModalExists = () => {
+    if (document.getElementById('paymentModalOverlay')) return;
+
+    const modalHtml = `
       <div id="paymentModalOverlay" class="modal-overlay" style="display: none;">
         <div class="modal-content fade-up-enter" id="paymentModalContent">
           <div class="modal-header">
-            <h3>Vincular Método de Pago</h3>
+            <h3>Vincular Cuenta o Billetera</h3>
             <button class="close-modal-btn" id="btnCloseModal">&times;</button>
           </div>
           
@@ -155,75 +162,35 @@ export const renderPayments = (container) => {
                 </div>
               </div>
 
-              <button type="submit" class="auth-btn" style="margin-top: 15px;">Guardar Método de Pago</button>
+              <button type="submit" class="auth-btn" style="margin-top: 15px;">Guardar Cuenta o Billetera</button>
             </form>
           </div>
         </div>
       </div>
     `;
-
-    container.innerHTML = html;
-    attachEvents();
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = modalHtml;
+    document.body.appendChild(wrapper.firstElementChild);
   };
 
   const attachEvents = () => {
-    const btnOpen = document.getElementById('btnOpenModal');
-    const btnOpenEmpty = document.getElementById('btnOpenModalEmpty');
-    const btnClose = document.getElementById('btnCloseModal');
-    const overlay = document.getElementById('paymentModalOverlay');
-    const modalContent = document.getElementById('paymentModalContent');
-    const tabs = document.querySelectorAll('.pill-tab');
-    const form = document.getElementById('paymentForm');
+    // Buscar en document ya que el modal ahora es global (Portal)
+    const getOverlay = () => document.getElementById('paymentModalOverlay');
+    const getForm = () => document.getElementById('paymentForm');
 
-    const openModal = () => {
-      overlay.style.display = 'flex';
-      // Reset form
-      form.reset();
-      modalActiveTab = 'billetera';
-      switchTab('billetera');
-    };
-
-    const closeModal = () => {
-      overlay.style.display = 'none';
-    };
-
-    if (btnOpen) btnOpen.addEventListener('click', openModal);
-    if (btnOpenEmpty) btnOpenEmpty.addEventListener('click', openModal);
-    if (btnClose) btnClose.addEventListener('click', closeModal);
-
-    // Close on click outside
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        closeModal();
-      }
-    });
-
-    // Close on ESC key
-    const handleEsc = (e) => {
-      if (e.key === 'Escape' && overlay.style.display === 'flex') {
-        closeModal();
-      }
-    };
-    document.addEventListener('keydown', handleEsc);
-    
-    // Clean up listener when re-rendering to avoid memory leaks
-    container.addEventListener('DOMNodeRemoved', (e) => {
-      if (e.target === container) {
-        document.removeEventListener('keydown', handleEsc);
-      }
-    });
-
-    // Tab switching logic
     const switchTab = (tabId) => {
+      const overlay = getOverlay();
+      if (!overlay) return;
+      const tabs = overlay.querySelectorAll('.pill-tab');
       tabs.forEach(t => t.classList.remove('active'));
       const activeTab = Array.from(tabs).find(t => t.dataset.tab === tabId);
       if (activeTab) activeTab.classList.add('active');
 
-      document.querySelectorAll('.tab-content').forEach(tc => {
+      overlay.querySelectorAll('.tab-content').forEach(tc => {
         tc.style.display = 'none';
         tc.classList.remove('active');
       });
-      const activeContent = document.getElementById('form-' + tabId);
+      const activeContent = overlay.querySelector('#form-' + tabId);
       if (activeContent) {
         activeContent.style.display = 'block';
         activeContent.classList.add('active');
@@ -231,51 +198,112 @@ export const renderPayments = (container) => {
       modalActiveTab = tabId;
     };
 
-    tabs.forEach(tab => {
-      tab.addEventListener('click', (e) => {
-        switchTab(e.target.dataset.tab);
-      });
-    });
+    const openModal = () => {
+      const overlay = getOverlay();
+      const form = getForm();
+      if (overlay) overlay.style.display = 'flex';
+      if (form) form.reset();
+      modalActiveTab = 'billetera';
+      switchTab('billetera');
+    };
 
-    // Form Submission
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      let newMethod = { type: modalActiveTab };
+    const closeModal = () => {
+      const overlay = getOverlay();
+      if (overlay) overlay.style.display = 'none';
+    };
 
-      if (modalActiveTab === 'billetera') {
-        const platform = document.getElementById('billPlatform').value;
-        const id = document.getElementById('billId').value.trim();
-        if (!platform || !id) {
-          return showNotification('Por favor completa la plataforma y el identificador.', 'error');
-        }
-        newMethod.platform = platform;
-        newMethod.identifier = id;
-      } else if (modalActiveTab === 'tarjeta') {
-        const num = document.getElementById('cardNumber').value.trim();
-        const holder = document.getElementById('cardHolder').value.trim();
-        const exp = document.getElementById('cardExpiry').value.trim();
-        const cvv = document.getElementById('cardCvv').value.trim();
-        if (!num || !holder || !exp || !cvv) {
-          return showNotification('Por favor completa todos los datos de la tarjeta.', 'error');
-        }
-        newMethod.number = num;
-        newMethod.holder = holder;
-        newMethod.expiry = exp;
-      } else if (modalActiveTab === 'banco') {
-        const bank = document.getElementById('bankName').value;
-        const accType = document.getElementById('bankAccType').value;
-        const accNum = document.getElementById('bankAccNumber').value.trim();
-        if (!bank || !accType || !accNum) {
-          return showNotification('Por favor selecciona el banco y detalla la cuenta.', 'error');
-        }
-        newMethod.bank = bank;
-        newMethod.accountType = accType;
-        newMethod.accountNumber = accNum;
+    // Limpiar manejadores previos en re-renders para evitar loops y memory leaks
+    if (container._paymentClickHandler) {
+      container.removeEventListener('click', container._paymentClickHandler);
+    }
+    if (container._paymentSubmitHandler) {
+      container.removeEventListener('submit', container._paymentSubmitHandler);
+    }
+
+    // Delegación de Eventos de Clic
+    container._paymentClickHandler = (e) => {
+      const btnOpen = e.target.closest('#btnOpenModal');
+      const btnOpenEmpty = e.target.closest('#btnOpenModalEmpty');
+      const btnClose = e.target.closest('#btnCloseModal');
+      const tab = e.target.closest('.pill-tab');
+      const overlay = getOverlay();
+
+      if (btnOpen || btnOpenEmpty) {
+        openModal();
+      } else if (btnClose || (overlay && e.target === overlay)) {
+        closeModal();
+      } else if (tab && overlay && overlay.contains(tab)) {
+        switchTab(tab.dataset.tab);
       }
+    };
+    
+    // Escuchar clicks tanto en el container como en el document (para el modal)
+    document.addEventListener('click', container._paymentClickHandler);
 
-      appStore.addPaymentMethod(newMethod);
-      showNotification('Método de pago vinculado exitosamente', 'success');
-      closeModal();
+    // Delegación de Eventos de Formulario (Submit)
+    container._paymentSubmitHandler = (e) => {
+      const form = getForm();
+      if (form && e.target === form) {
+        e.preventDefault();
+        let newMethod = { type: modalActiveTab };
+
+        if (modalActiveTab === 'billetera') {
+          const platform = form.querySelector('#billPlatform').value;
+          const id = form.querySelector('#billId').value.trim();
+          if (!platform || !id) {
+            return showNotification('Por favor completa la plataforma y el identificador.', 'error');
+          }
+          newMethod.platform = platform;
+          newMethod.identifier = id;
+        } else if (modalActiveTab === 'tarjeta') {
+          const num = form.querySelector('#cardNumber').value.trim();
+          const holder = form.querySelector('#cardHolder').value.trim();
+          const exp = form.querySelector('#cardExpiry').value.trim();
+          const cvv = form.querySelector('#cardCvv').value.trim();
+          if (!num || !holder || !exp || !cvv) {
+            return showNotification('Por favor completa todos los datos de la tarjeta.', 'error');
+          }
+          newMethod.number = num;
+          newMethod.holder = holder;
+          newMethod.expiry = exp;
+        } else if (modalActiveTab === 'banco') {
+          const bank = form.querySelector('#bankName').value;
+          const accType = form.querySelector('#bankAccType').value;
+          const accNum = form.querySelector('#bankAccNumber').value.trim();
+          if (!bank || !accType || !accNum) {
+            return showNotification('Por favor selecciona el banco y detalla la cuenta.', 'error');
+          }
+          newMethod.bank = bank;
+          newMethod.accountType = accType;
+          newMethod.accountNumber = accNum;
+        }
+
+        appStore.addPaymentMethod(newMethod);
+        showNotification('Cuenta o Billetera vinculada exitosamente', 'success');
+        closeModal();
+      }
+    };
+    document.addEventListener('submit', container._paymentSubmitHandler);
+
+    // Cerrar con Escape
+    const handleEsc = (e) => {
+      const overlay = getOverlay();
+      if (e.key === 'Escape' && overlay && overlay.style.display === 'flex') {
+        closeModal();
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+
+    container.addEventListener('DOMNodeRemoved', (e) => {
+      if (e.target === container) {
+        document.removeEventListener('keydown', handleEsc);
+        document.removeEventListener('click', container._paymentClickHandler);
+        document.removeEventListener('submit', container._paymentSubmitHandler);
+        
+        // Limpiar el modal del body al salir de la vista
+        const overlay = document.getElementById('paymentModalOverlay');
+        if (overlay) overlay.remove();
+      }
     });
   };
 

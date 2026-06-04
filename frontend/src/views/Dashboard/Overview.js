@@ -3,6 +3,8 @@ import { SocketClient } from '../../core/socket.js';
 import { appStore } from '../../store/appStore.js';
 import { BudgetProgress } from '../../components/dashboard/BudgetProgress.js';
 import { DonutChart } from '../../components/dashboard/DonutChart.js';
+import { formatCurrency } from '../../utils/formatters.js';
+import { TransactionModal } from '../../components/dashboard/TransactionModal.js';
 
 export const renderOverview = (container) => {
   const token = localStorage.getItem('jwtToken');
@@ -22,6 +24,7 @@ export const renderOverview = (container) => {
   container.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
       <h2 style="margin: 0; color: var(--text-primary);">Dashboard Financiero</h2>
+      <button id="btnOpenTxModal" class="navbar-btn" style="padding: 8px 16px; font-size: 0.95rem; border-radius: 50px; width: max-content;">+ Registrar Movimiento</button>
     </div>
 
     <div class="dashboard-grid">
@@ -39,37 +42,10 @@ export const renderOverview = (container) => {
       </div>
     </div>
 
-    <!-- Layout dividido en 3 columnas/secciones: Formulario, Presupuestos, Grafica e Historial -->
-    <div class="content-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+    <!-- Layout dividido en 2 columnas/secciones: Presupuestos/Grafica e Historial -->
+    <div class="content-grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
       
-      <!-- Columna Izquierda: Formulario -->
-      <div class="card" style="height: fit-content;">
-        <h3 style="margin-top: 0; border-bottom: 2px solid rgba(123, 44, 191, 0.2); padding-bottom: 10px;">Registrar Movimiento</h3>
-        <form id="transactionForm">
-          <select id="txTipo" required>
-            <option value="income">Ingreso (+)</option>
-            <option value="expense">Gasto (-)</option>
-          </select>
-          
-          <input type="number" id="txMonto" placeholder="Monto (ej: 100.50)" step="0.01" required>
-          
-          <select id="txCategoria" required>
-            <option value="" disabled selected>Selecciona Categoría...</option>
-            <option value="Salario">Salario</option>
-            <option value="Ventas">Ventas</option>
-            <option value="Comida">Comida</option>
-            <option value="Transporte">Transporte</option>
-            <option value="Servicios">Servicios Básicos</option>
-            <option value="Entretenimiento">Entretenimiento</option>
-            <option value="Otros">Otros</option>
-          </select>
-
-          <input type="text" id="txDescripcion" placeholder="Descripción breve">
-          <button type="submit" style="margin-top: 15px; font-size: 1.1rem; padding: 12px;">Procesar Transacción</button>
-        </form>
-      </div>
-
-      <!-- Columna Central: Presupuestos y Donut -->
+      <!-- Columna Izquierda: Presupuestos y Donut -->
       <div style="display: flex; flex-direction: column; gap: 20px;">
         <div id="budgetProgressRoot"></div>
         <div id="donutChartRoot"></div>
@@ -95,9 +71,9 @@ export const renderOverview = (container) => {
   // Funciones de actualización de la UI basadas en el Store
   const updateBalanceUI = (e) => {
     const data = e.detail;
-    netBalanceEl.innerText = `$ ${data.currentBalance.toFixed(2)}`;
-    totalIncomeEl.innerText = `$ ${data.totalIncome.toFixed(2)}`;
-    totalExpenseEl.innerText = `$ ${data.totalExpense.toFixed(2)}`;
+    netBalanceEl.innerText = formatCurrency(data.currentBalance);
+    totalIncomeEl.innerText = formatCurrency(data.totalIncome);
+    totalExpenseEl.innerText = formatCurrency(data.totalExpense);
     
     if (data.currentBalance < 0) {
       netBalanceEl.className = 'text-danger';
@@ -108,8 +84,6 @@ export const renderOverview = (container) => {
 
   const updateHistoryUI = (e) => {
     const tx = e.detail;
-    document.getElementById('txMonto').value = '';
-    document.getElementById('txDescripcion').value = '';
 
     if (document.getElementById('emptyHistoryMsg')) {
       document.getElementById('emptyHistoryMsg').remove();
@@ -139,7 +113,7 @@ export const renderOverview = (container) => {
 
     const amountDiv = document.createElement('div');
     amountDiv.className = `tx-amount ${amountClass}`;
-    amountDiv.textContent = `${amountSign}$${montoFloat}`;
+    amountDiv.textContent = `${amountSign}${formatCurrency(tx.monto)}`;
 
     li.appendChild(infoDiv);
     li.appendChild(amountDiv);
@@ -184,7 +158,7 @@ export const renderOverview = (container) => {
 
       const amountDiv = document.createElement('div');
       amountDiv.className = `tx-amount ${amountClass}`;
-      amountDiv.textContent = `${amountSign}$${montoFloat}`;
+      amountDiv.textContent = `${amountSign}${formatCurrency(tx.monto)}`;
 
       li.appendChild(infoDiv);
       li.appendChild(amountDiv);
@@ -214,7 +188,7 @@ export const renderOverview = (container) => {
 
     const textSpan = document.createElement('span');
     textSpan.className = 'toast-text';
-    textSpan.textContent = `Límite: $${alertData.limite.toFixed(2)} | Gastado: $${alertData.gastado.toFixed(2)}`;
+    textSpan.textContent = `Límite: ${formatCurrency(alertData.limite)} | Gastado: ${formatCurrency(alertData.gastado)}`;
 
     contentDiv.appendChild(titleSpan);
     contentDiv.appendChild(textSpan);
@@ -254,19 +228,9 @@ export const renderOverview = (container) => {
   BudgetProgress.render('budgetProgressRoot');
   DonutChart.render('donutChartRoot');
 
-  // Emisión (Action) - La vista sigue enviando la petición a través del socket
-  document.getElementById('transactionForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const inputMonto = parseFloat(document.getElementById('txMonto').value);
-    
-    const payload = {
-      tipo: document.getElementById('txTipo').value,
-      monto: isNaN(inputMonto) ? 0 : inputMonto,
-      categoria: document.getElementById('txCategoria').value,
-      descripcion: document.getElementById('txDescripcion').value
-    };
-
-    socket.emit('transaction:create', payload);
+  // Abrir Modal de Transacciones
+  document.getElementById('btnOpenTxModal').addEventListener('click', () => {
+    TransactionModal.render();
   });
 
   // Importante: Limpieza al desmontar para evitar memory leaks!

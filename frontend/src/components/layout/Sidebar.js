@@ -13,7 +13,7 @@ export const Sidebar = {
             <i class="ri-dashboard-3-line icon"></i> Resumen
           </button>
           <button class="sidebar-item ${currentPath === '/dashboard/payments' ? 'active' : ''}" data-path="/dashboard/payments">
-            <i class="ri-bank-card-line icon"></i> Cuentas y Métodos de Pago
+            <i class="ri-bank-card-line icon"></i> Mis Cuentas y Tarjetas
           </button>
           <button class="sidebar-item ${currentPath === '/dashboard/budgets' ? 'active' : ''}" data-path="/dashboard/budgets">
             <i class="ri-pie-chart-line icon"></i> Presupuestos y Metas
