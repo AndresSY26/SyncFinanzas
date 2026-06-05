@@ -30,6 +30,10 @@ export const SocketClient = {
       appStore.setTransactions(txs);
     });
 
+    socketInstance.on('account:balances_updated', (balances) => {
+      appStore.setAccountBalances(balances);
+    });
+
     socketInstance.on('account:list_success', (accounts) => {
       appStore.setPaymentMethods(accounts);
     });

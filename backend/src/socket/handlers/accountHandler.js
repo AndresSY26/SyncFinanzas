@@ -26,4 +26,17 @@ export const registerAccountHandlers = (io, socket) => {
       socket.emit('error:system', { code: 'ACCOUNT_CREATE_ERROR', message: error.message });
     }
   });
+
+  socket.on('account:delete', async (accountId) => {
+    try {
+      if (!socket.userId) return;
+      await accountService.deleteAccount(socket.userId, accountId);
+      
+      const accounts = await accountService.getAccountsByUserId(socket.userId);
+      socket.emit('account:list_success', accounts);
+    } catch (error) {
+      console.error('Error deleting account via socket:', error);
+      socket.emit('error:system', { code: 'ACCOUNT_DELETE_ERROR', message: error.message });
+    }
+  });
 };

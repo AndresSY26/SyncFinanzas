@@ -8,13 +8,10 @@ class AppStore extends EventTarget {
         username: 'AndRoy',
         email: 'andresksa123@gmail.com'
       },
-      balance: {
-        currentBalance: 0,
-        totalIncome: 0,
-        totalExpense: 0
-      },
+      balance: [],
       transactions: [],
       paymentMethods: [],
+      accountBalances: [],
       theme: 'light'
     };
 
@@ -54,6 +51,11 @@ class AppStore extends EventTarget {
   setTransactions(txs) {
     this.state.transactions = txs;
     this.dispatchEvent(new CustomEvent('transaction_history_loaded', { detail: txs }));
+  }
+
+  setAccountBalances(balances) {
+    this.state.accountBalances = balances;
+    this.dispatchEvent(new CustomEvent('account_balances_loaded', { detail: balances }));
   }
 
   notifyAlert(alertData) {

@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     cuenta_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
     tipo VARCHAR(50) NOT NULL CHECK (tipo IN ('income', 'expense')),
     monto NUMERIC(15, 2) NOT NULL,
+    moneda VARCHAR(10) DEFAULT 'COP',
     categoria VARCHAR(100) NOT NULL,
     descripcion TEXT,
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP

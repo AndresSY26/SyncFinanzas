@@ -76,19 +76,35 @@ export const TransactionModal = {
 
       modalBody.innerHTML = `
         <form id="modalTransactionForm" style="display: flex; flex-direction: column; gap: 15px;">
-          <select id="modalTxCuenta" required class="custom-select" style="width: 100%; padding: 12px; border-radius: 10px; background: var(--background-global); color: var(--text-primary); border: 1px solid rgba(123, 44, 191, 0.3);">
+          <select id="modalTxCuenta" required class="custom-select">
             <option value="" disabled selected>Selecciona Cuenta o Billetera...</option>
             ${optionsHtml}
           </select>
           
-          <select id="modalTxTipo" required class="custom-select" style="width: 100%; padding: 12px; border-radius: 10px; background: var(--background-global); color: var(--text-primary); border: 1px solid rgba(123, 44, 191, 0.3);">
+          <div id="transferDestContainer" style="display: none;">
+            <select id="modalTxDestino" class="custom-select">
+              <option value="" disabled selected>Selecciona Cuenta de Destino...</option>
+              ${optionsHtml}
+            </select>
+          </div>
+          
+          <select id="modalTxTipo" required class="custom-select">
             <option value="income">Ingreso (+)</option>
             <option value="expense">Gasto (-)</option>
+            <option value="transfer">Transferencia (⇄)</option>
           </select>
           
-          <input type="text" id="modalTxMonto" placeholder="Monto (ej: 1.000,50)" required style="width: 100%; padding: 12px; border-radius: 10px; background: var(--background-global); color: var(--text-primary); border: 1px solid rgba(123, 44, 191, 0.3); box-sizing: border-box;">
+          <div style="display: flex; gap: 10px;">
+            <select id="modalTxMoneda" required class="custom-select" style="flex: 1;">
+              <option value="COP" selected>COP</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="MXN">MXN</option>
+            </select>
+            <input type="text" id="modalTxMonto" placeholder="Monto (ej: 1.000,50)" required style="flex: 2;">
+          </div>
           
-          <select id="modalTxCategoria" required class="custom-select" style="width: 100%; padding: 12px; border-radius: 10px; background: var(--background-global); color: var(--text-primary); border: 1px solid rgba(123, 44, 191, 0.3);">
+          <select id="modalTxCategoria" required class="custom-select">
             <option value="" disabled selected>Selecciona Categoría...</option>
             <option value="Salario">Salario</option>
             <option value="Ventas">Ventas</option>
@@ -99,9 +115,9 @@ export const TransactionModal = {
             <option value="Otros">Otros</option>
           </select>
 
-          <input type="text" id="modalTxDescripcion" placeholder="Descripción breve" style="width: 100%; padding: 12px; border-radius: 10px; background: var(--background-global); color: var(--text-primary); border: 1px solid rgba(123, 44, 191, 0.3); box-sizing: border-box;">
+          <input type="text" id="modalTxDescripcion" placeholder="Descripción breve">
           
-          <button type="submit" class="btn-primary-modal" style="margin-top: 10px;">Procesar Transacción</button>
+          <button type="submit" id="btnProcesarTx" class="btn-primary-modal" style="margin-top: 10px;">Procesar Transacción</button>
         </form>
       `;
 
@@ -120,19 +136,70 @@ export const TransactionModal = {
         }).format(floatValue);
       });
 
+      // UI Reactivity for Transfers
+      const txTipoEl = document.getElementById('modalTxTipo');
+      const destContainer = document.getElementById('transferDestContainer');
+      const destSelect = document.getElementById('modalTxDestino');
+      const catSelect = document.getElementById('modalTxCategoria');
+      const btnProcesar = document.getElementById('btnProcesarTx');
+      const originSelect = document.getElementById('modalTxCuenta');
+
+      const checkTransferValidation = () => {
+        if (txTipoEl.value === 'transfer') {
+          if (originSelect.value && destSelect.value && originSelect.value === destSelect.value) {
+            btnProcesar.disabled = true;
+            btnProcesar.style.opacity = '0.5';
+            btnProcesar.textContent = 'Cuentas origen y destino iguales';
+          } else {
+            btnProcesar.disabled = false;
+            btnProcesar.style.opacity = '1';
+            btnProcesar.textContent = 'Procesar Transacción';
+          }
+        }
+      };
+
+      originSelect.addEventListener('change', checkTransferValidation);
+      destSelect.addEventListener('change', checkTransferValidation);
+
+      txTipoEl.addEventListener('change', (e) => {
+        if (e.target.value === 'transfer') {
+          destContainer.style.display = 'block';
+          destSelect.required = true;
+          catSelect.style.display = 'none';
+          catSelect.required = false;
+          originSelect.options[0].text = "Selecciona Cuenta de Origen...";
+        } else {
+          destContainer.style.display = 'none';
+          destSelect.required = false;
+          catSelect.style.display = 'block';
+          catSelect.required = true;
+          originSelect.options[0].text = "Selecciona Cuenta o Billetera...";
+          btnProcesar.disabled = false;
+          btnProcesar.style.opacity = '1';
+          btnProcesar.textContent = 'Procesar Transacción';
+        }
+        checkTransferValidation();
+      });
+
       // Submit logic
       document.getElementById('modalTransactionForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const inputMontoRaw = document.getElementById('modalTxMonto').value.replace(/\D/g, '');
         const inputMonto = inputMontoRaw ? parseFloat(inputMontoRaw) / 100 : 0;
         
+        const tipo = document.getElementById('modalTxTipo').value;
         const payload = {
           cuenta_id: document.getElementById('modalTxCuenta').value,
-          tipo: document.getElementById('modalTxTipo').value,
+          tipo: tipo,
           monto: inputMonto,
-          categoria: document.getElementById('modalTxCategoria').value,
+          moneda: document.getElementById('modalTxMoneda').value,
+          categoria: tipo === 'transfer' ? 'Transferencia' : document.getElementById('modalTxCategoria').value,
           descripcion: document.getElementById('modalTxDescripcion').value
         };
+
+        if (tipo === 'transfer') {
+          payload.cuenta_destino_id = document.getElementById('modalTxDestino').value;
+        }
 
         socket.emit('transaction:create', payload);
         closeModal();

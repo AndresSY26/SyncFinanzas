@@ -10,15 +10,20 @@ export const registerGlobalEventObservers = (io) => {
   // Cuando el transactionService emite este evento interno...
   appEvents.on('balance:changed', async (userId) => {
     try {
-      // 1. Obtenemos los nuevos cálculos frescos de la BD
-      const balanceData = await transactionService.getBalance(userId);
-      
-      // 2. Buscamos todas las pestañas/dispositivos conectados del usuario
       const userSockets = sessionManager.getUserSockets(userId);
       
-      // 3. Emitimos ('push') la actualización reactiva a cada uno de sus sockets
-      userSockets.forEach(socketId => {
-        io.to(socketId).emit('balance:updated', balanceData);
+      userSockets.forEach(async (socketId) => {
+        const socket = io.sockets.sockets.get(socketId);
+        if (socket) {
+          const filterRange = socket.filterRange || 'all';
+          const balanceData = await transactionService.getBalance(userId, filterRange);
+          const txs = await transactionService.getTransactions(userId, filterRange);
+          const accountBalances = await transactionService.getAccountBalances(userId);
+
+          socket.emit('balance:updated', balanceData);
+          socket.emit('account:balances_updated', accountBalances);
+          socket.emit('transaction:history', txs);
+        }
       });
       
     } catch (error) {
@@ -51,10 +56,28 @@ export const registerTransactionHandlers = (io, socket) => {
   socket.on('transaction:list', async () => {
     try {
       if (!socket.userId) return;
-      const txs = await transactionService.getTransactions(socket.userId);
+      const filterRange = socket.filterRange || 'all';
+      const txs = await transactionService.getTransactions(socket.userId, filterRange);
       socket.emit('transaction:history', txs);
       
-      const balanceData = await transactionService.getBalance(socket.userId);
+      const balanceData = await transactionService.getBalance(socket.userId, filterRange);
+      socket.emit('balance:updated', balanceData);
+      
+      const accountBalances = await transactionService.getAccountBalances(socket.userId);
+      socket.emit('account:balances_updated', accountBalances);
+    } catch (error) {
+      console.error(error);
+    }
+  });
+
+  socket.on('dashboard:filter', async (range) => {
+    try {
+      if (!socket.userId) return;
+      socket.filterRange = range;
+      const txs = await transactionService.getTransactions(socket.userId, range);
+      socket.emit('transaction:history', txs);
+      
+      const balanceData = await transactionService.getBalance(socket.userId, range);
       socket.emit('balance:updated', balanceData);
     } catch (error) {
       console.error(error);
@@ -69,18 +92,38 @@ export const registerTransactionHandlers = (io, socket) => {
         throw new Error('No autorizado: Usuario no autenticado en el socket.');
       }
 
-      // Inyectamos el usuario desde el token/middleware
-      const newTx = await transactionService.createTransaction({
-        usuario_id: socket.userId, // Obligamos a que use el ID del token seguro
-        cuenta_id: payload.cuenta_id, // Nuevo campo de relacion con metodo de pago
-        tipo: payload.tipo,
-        monto: parseFloat(payload.monto), // Parseo defensivo en el backend también
-        categoria: payload.categoria,
-        descripcion: payload.descripcion
-      });
+      if (payload.tipo === 'transfer') {
+        if (!payload.cuenta_destino_id) {
+          throw new Error('La cuenta de destino es obligatoria para transferencias.');
+        }
+        
+        const [txExpense, txIncome] = await transactionService.createTransfer({
+          usuario_id: socket.userId,
+          cuenta_id: payload.cuenta_id,
+          cuenta_destino_id: payload.cuenta_destino_id,
+          monto: parseFloat(payload.monto),
+          moneda: payload.moneda,
+          categoria: 'Transferencia',
+          descripcion: payload.descripcion
+        });
 
-      // Respondemos SOLO a este cliente que el registro de su gasto/ingreso fue un éxito
-      socket.emit('transaction:created_success', newTx);
+        // Respondemos 2 veces para inyectar ambos en el UI
+        socket.emit('transaction:created_success', txExpense);
+        socket.emit('transaction:created_success', txIncome);
+
+      } else {
+        const newTx = await transactionService.createTransaction({
+          usuario_id: socket.userId,
+          cuenta_id: payload.cuenta_id,
+          tipo: payload.tipo,
+          monto: parseFloat(payload.monto),
+          moneda: payload.moneda,
+          categoria: payload.categoria,
+          descripcion: payload.descripcion
+        });
+
+        socket.emit('transaction:created_success', newTx);
+      }
       
     } catch (error) {
       socket.emit('error:system', { code: 'TX_CREATE_ERROR', message: error.message });

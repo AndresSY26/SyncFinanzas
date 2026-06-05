@@ -56,13 +56,37 @@
 .progress-fill {
   height: 100%;
   border-radius: 9999px;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease;
 }
 
 .bar-normal {
-  background: linear-gradient(90deg, var(--primary-purple) 0%, #a461e3 100%);
+  background: linear-gradient(90deg, var(--primary-purple) 0%, var(--accent-pink) 100%);
 }
 
 .bar-warning {
-  background: linear-gradient(90deg, var(--accent-pink) 0%, #ff529a 100%);
+  background: linear-gradient(90deg, #ffb703 0%, #fb8500 100%);
+}
+
+.bar-danger {
+  background: linear-gradient(90deg, #ff0a54 0%, #ff477e 100%);
+  box-shadow: 0 0 10px rgba(255, 10, 84, 0.5);
+}
+
+.budget-alert-badge {
+  background: rgba(255, 10, 84, 0.1);
+  color: #ff0a54;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 10, 84, 0.3);
+  animation: pulse-danger 1.5s infinite;
+  letter-spacing: 0.5px;
+}
+
+@keyframes pulse-danger {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
 }

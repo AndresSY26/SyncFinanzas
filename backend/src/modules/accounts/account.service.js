@@ -52,8 +52,20 @@ export const accountService = {
         balance_inicial: row.balance_inicial,
         ...(row.detalles || {})
       };
-    } catch (error) {
+      } catch (error) {
       console.error('Error creating account:', error.message);
+      throw error;
+    }
+  },
+
+  deleteAccount: async (usuario_id, account_id) => {
+    const query = 'DELETE FROM accounts WHERE id = $1 AND usuario_id = $2 RETURNING id;';
+    try {
+      const result = await pool.query(query, [account_id, usuario_id]);
+      if (result.rowCount === 0) throw new Error('Cuenta no encontrada o no pertenece al usuario');
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error deleting account:', error.message);
       throw error;
     }
   }

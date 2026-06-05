@@ -249,3 +249,36 @@
   font-weight: 600;
   opacity: 1 !important;
 }
+
+.delete-account-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.payment-card:hover .delete-account-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.delete-account-btn:hover {
+  background: rgba(255, 50, 50, 0.8);
+  transform: scale(1.1);
+}

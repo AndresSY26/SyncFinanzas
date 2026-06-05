@@ -1,4 +1,5 @@
 import { appStore } from '../../store/appStore.js';
+import { formatCurrency } from '../../utils/formatters.js';
 import './DonutChart.css';
 
 export const DonutChart = {
@@ -54,28 +55,30 @@ export const DonutChart = {
             stroke-dasharray="${dashArray} ${circumference}"
             stroke-dashoffset="${-currentOffset}"
           >
-            <title>${cat}: $${amt.toFixed(2)} (${(percent * 100).toFixed(1)}%)</title>
+            <title>${cat}: ${formatCurrency(amt, 'COP')} (${(percent * 100).toFixed(1)}%)</title>
           </circle>
         `;
         
         legendHtml += `
           <div class="legend-item">
-            <span class="legend-color" style="background: ${color}"></span>
-            <div class="legend-info">
-              <span class="legend-label">${cat}</span>
-              <span class="legend-amt">$${amt.toFixed(2)}</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="legend-color" style="background: ${color}; width: 10px; height: 10px; border-radius: 50%;"></span>
+              <span class="legend-label" style="font-size: 0.9rem; color: var(--text-secondary);">${cat}</span>
             </div>
+            <span class="legend-amt" style="font-size: 0.95rem; font-weight: bold; color: var(--text-primary);">${formatCurrency(amt, 'COP')}</span>
           </div>
         `;
 
         currentOffset += dashArray;
       });
 
+      const totalFormatted = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(total);
+
       svgHtml += `
           </svg>
-          <div class="donut-center-text">
+          <div class="donut-center-text" style="width: 100px; text-align: center;">
             <span class="donut-total-lbl">Total</span>
-            <span class="donut-total-val">$${total.toFixed(0)}</span>
+            <span class="donut-total-val" style="display: block; font-size: 1.15rem; word-break: break-word;">${totalFormatted}</span>
           </div>
         </div>
       `;

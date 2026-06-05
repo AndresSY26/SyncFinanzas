@@ -4,6 +4,9 @@ Repositorio privado para el desarrollo y control de versiones de **SyncFinanzas*
 
 ## 📦 Registro de Versiones
 
+- **v1.4.0:** Evolución Analítica del Dashboard. Incorporación de gráficos de tendencia temporal asíncronos (Chart.js), refactorización de layout a dos columnas entrelazadas simétricas, Micro-UX emocional en las barras de presupuestos, widget de Meta de Ahorro, e inyección dinámica de formato de divisas `Intl.NumberFormat`.
+- **v1.3.1:** Fix de colisiones globales en CSS del modal de pagos y limpieza de tests.
+- **v1.3.0:** Implementación del sistema de pagos, formulario de vinculación de cuentas y conexión robusta con WebSockets en tiempo real.
 - **v1.1.0:** Arquitectura modular escalable (Feature-Driven), refactorización profunda con Capa de Servicios y migración definitiva de la autenticación a **Google OAuth2 Real (One Tap y SDK de Identity Services)**.
 - **v1.0.0:** Configuración inicial del repositorio. Arquitectura Base y Diseño UI Premium con soporte nativo de variables CSS y Modo Oscuro.
 
@@ -15,7 +18,7 @@ Repositorio privado para el desarrollo y control de versiones de **SyncFinanzas*
 - **Módulos Implementados:**
   - Landing Page pública.
   - Sistema de Autenticación Híbrida (Credenciales locales cifradas con Bcrypt y Login/Registro oficial con la librería de Google Cloud).
-  - Dashboard Financiero (Resumen de balances, Gráficos de dona, Progreso de Presupuestos).
+  - Dashboard Financiero Premium (Balances reactivos por WebSocket, Distribución de gastos en Dona Interactiva, Gráfico de Tendencia Cronológica suavizada, Progreso de Presupuestos con Micro-UX emocional, y widget de Metas).
   - Gestión de Cuentas y Métodos de Pago (Tarjetas, Billeteras, Cuentas bancarias).
   - Historial Completo de Transacciones.
   - Configuración de Perfil y Seguridad (Auditoría de Sesiones Activas por IP/Dispositivo).

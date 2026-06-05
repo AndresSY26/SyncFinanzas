@@ -1,4 +1,5 @@
 import { appStore } from '../../store/appStore.js';
+import { formatCurrency } from '../../utils/formatters.js';
 import './BudgetProgress.css';
 
 export const BudgetProgress = {
@@ -29,14 +30,25 @@ export const BudgetProgress = {
       for (const [cat, amount] of Object.entries(expenses)) {
         const limit = appStore.getBudgetLimit(cat);
         const percent = Math.min((amount / limit) * 100, 100);
-        const isWarning = percent >= 85;
-        const colorClass = isWarning ? 'bar-warning' : 'bar-normal';
+        
+        let colorClass = 'bar-normal';
+        let badgeHtml = '';
+        
+        if (percent >= 100) {
+          colorClass = 'bar-danger';
+          badgeHtml = '<span class="budget-alert-badge">¡Límite Superado!</span>';
+        } else if (percent >= 70) {
+          colorClass = 'bar-warning';
+        }
 
         html += `
           <div class="budget-item">
             <div class="budget-header">
-              <span class="budget-cat">${cat}</span>
-              <span class="budget-amounts">$${amount.toFixed(2)} / $${limit.toFixed(2)}</span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="budget-cat">${cat}</span>
+                ${badgeHtml}
+              </div>
+              <span class="budget-amounts">${formatCurrency(amount, 'COP')} / ${formatCurrency(limit, 'COP')}</span>
             </div>
             <div class="progress-bg">
               <div class="progress-fill ${colorClass}" style="width: ${percent}%;"></div>

@@ -84,14 +84,35 @@ export const Navbar = {
       
       const updateNavBalance = (e) => {
         if (!navBalanceDisplay) return;
-        const bal = e.detail.currentBalance;
-        navBalanceDisplay.innerText = `Balance: ${formatCurrency(bal)}`;
+        const balances = e.detail;
         
-        // Aplicar la animación RGB dinámica limpiando estilos estáticos previos
-        navBalanceDisplay.className = 'navbar-balance rgb-text-balance';
-        navBalanceDisplay.style.color = '';
-        navBalanceDisplay.style.fontWeight = '';
-        navBalanceDisplay.style.marginRight = '';
+        let displayHtml = '';
+        if (Array.isArray(balances) && balances.length > 0) {
+          const mainBal = balances[0];
+          const otherBals = balances.slice(1);
+          
+          displayHtml = `<span class="rgb-text-balance" style="cursor: pointer; margin: 0;">Balance: ${formatCurrency(mainBal.currentBalance, mainBal.moneda)}</span>`;
+          
+          if (otherBals.length > 0) {
+            displayHtml += `<div class="balance-popover">`;
+            otherBals.forEach(b => {
+              const valClass = b.currentBalance < 0 ? 'popover-negative' : 'popover-positive';
+              displayHtml += `
+                <div class="popover-item">
+                  <div class="popover-badge">${b.moneda}</div>
+                  <span class="popover-val ${valClass}">${formatCurrency(b.currentBalance, b.moneda)}</span>
+                </div>`;
+            });
+            displayHtml += `</div>`;
+          }
+        } else if (balances && balances.currentBalance !== undefined) {
+          displayHtml = `<span class="rgb-text-balance" style="margin: 0;">Balance: ${formatCurrency(balances.currentBalance, balances.moneda || 'COP')}</span>`;
+        } else {
+          displayHtml = `<span class="rgb-text-balance" style="margin: 0;">Balance: ${formatCurrency(0, 'COP')}</span>`;
+        }
+        
+        navBalanceDisplay.innerHTML = displayHtml;
+        navBalanceDisplay.className = 'navbar-balance-container';
       };
 
       appStore.addEventListener('balance_changed', updateNavBalance);
