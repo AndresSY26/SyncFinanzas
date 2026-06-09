@@ -80,8 +80,14 @@ export const transactionService = {
       case '7days':
         return `fecha >= CURRENT_DATE - INTERVAL '7 days'`;
       case 'month':
-        return `date_trunc('month', fecha) = date_trunc('month', CURRENT_DATE)`;
+      case 'Este Mes':
+        return `fecha >= DATE_TRUNC('month', CURRENT_DATE)`;
+      case '3 Meses':
+        return `fecha >= CURRENT_DATE - INTERVAL '3 months'`;
+      case '6 Meses':
+        return `fecha >= CURRENT_DATE - INTERVAL '6 months'`;
       case 'all':
+      case 'Todos':
       default:
         return `1=1`;
     }

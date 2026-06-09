@@ -14,7 +14,8 @@ class AppStore extends EventTarget {
       accountBalances: [],
       budgets: {},
       savingsGoals: [],
-      theme: 'light'
+      theme: 'light',
+      historyFilter: 'Todos'
     };
 
     // Inicializar el tema desde localStorage
