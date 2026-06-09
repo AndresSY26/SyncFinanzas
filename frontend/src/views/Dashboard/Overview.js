@@ -330,6 +330,8 @@ export const renderOverview = (container) => {
   // Solicitar lista completa al backend
   if (socket) {
     socket.emit('transaction:list');
+    socket.emit('budget:list');
+    socket.emit('goal:list');
     if (appStore.state.paymentMethods.length === 0) {
       socket.emit('account:list');
     }

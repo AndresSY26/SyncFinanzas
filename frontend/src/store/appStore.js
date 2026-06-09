@@ -12,6 +12,8 @@ class AppStore extends EventTarget {
       transactions: [],
       paymentMethods: [],
       accountBalances: [],
+      budgets: {},
+      savingsGoals: [],
       theme: 'light'
     };
 
@@ -62,6 +64,16 @@ class AppStore extends EventTarget {
     this.dispatchEvent(new CustomEvent('budget_alert', { detail: alertData }));
   }
   
+  setBudgets(budgetsList) {
+    this.state.budgets = budgetsList || [];
+    this.dispatchEvent(new CustomEvent('budgets_loaded', { detail: this.state.budgets }));
+  }
+
+  setSavingsGoals(goals) {
+    this.state.savingsGoals = goals;
+    this.dispatchEvent(new CustomEvent('goals_loaded', { detail: this.state.savingsGoals }));
+  }
+  
   getCategoryExpenses() {
     const expenses = new Map();
     this.state.transactions.forEach(tx => {
@@ -79,8 +91,9 @@ class AppStore extends EventTarget {
     const cat = String(categoria);
     if (cat === '__proto__' || cat === 'constructor' || cat === 'prototype') return 300;
 
-    if (this.state.budgets && Object.prototype.hasOwnProperty.call(this.state.budgets, cat)) {
-      return Reflect.get(this.state.budgets, cat);
+    if (Array.isArray(this.state.budgets)) {
+      const budgetObj = this.state.budgets.find(b => b.categoria === cat);
+      if (budgetObj) return parseFloat(budgetObj.monto_limite);
     }
     
     const fallbacks = new Map([

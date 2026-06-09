@@ -35,7 +35,19 @@ CREATE TABLE IF NOT EXISTS budgets (
     usuario_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     categoria VARCHAR(100) NOT NULL,
     monto_limite NUMERIC(15, 2) NOT NULL,
-    periodo VARCHAR(50) DEFAULT 'monthly',
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    recurrencia VARCHAR(50) DEFAULT 'none',
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS savings_goals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    nombre VARCHAR(100) NOT NULL,
+    monto_objetivo NUMERIC(15, 2) NOT NULL,
+    monto_actual NUMERIC(15, 2) DEFAULT 0,
+    cuenta_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

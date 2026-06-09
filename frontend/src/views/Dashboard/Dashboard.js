@@ -1,15 +1,21 @@
 import { Router } from '../../core/router.js';
+import { SocketClient } from '../../core/socket.js';
 import { Sidebar } from '../../components/layout/Sidebar.js';
 import { renderOverview } from './Overview.js';
 import { renderPayments } from '../Payments/Payments.js';
 import { renderHistory } from '../History/History.js';
 import { renderSettings } from '../Settings/Settings.js';
+import { renderBudgets } from './Budgets/Budgets.js';
 
 export const renderDashboard = (container, path) => {
   const token = localStorage.getItem('jwtToken');
   if (!token) {
     Router.navigate('/login');
     return;
+  }
+
+  if (!SocketClient.getSocket()) {
+    SocketClient.connect(token);
   }
 
   // Si el contenedor no tiene el layout activo, se inyecta
@@ -38,10 +44,11 @@ export const renderDashboard = (container, path) => {
     renderHistory(contentDiv);
   } else if (path === '/dashboard/settings') {
     renderSettings(contentDiv);
+  } else if (path === '/dashboard/budgets') {
+    renderBudgets(contentDiv);
   } else {
     let title = 'Vista en construcción';
-    if (path === '/dashboard/budgets') title = 'Presupuestos y Metas';
-    else if (path === '/dashboard/transfers') title = 'Transferencias y Envíos';
+    if (path === '/dashboard/transfers') title = 'Transferencias y Envíos';
     
     contentDiv.innerHTML = `
       <div class="empty-payments-state" style="max-width: 500px; margin: 40px auto; padding: 60px 30px;">

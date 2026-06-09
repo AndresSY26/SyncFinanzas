@@ -1,0 +1,35 @@
+.budgets-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .budgets-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.budget-input::-webkit-outer-spin-button,
+.budget-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.budget-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.btn-save-budget {
+  transition: background 0.3s ease;
+}
+
+.btn-save-budget:hover {
+  filter: brightness(1.1);
+}
+
+@keyframes pulseRed {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}

@@ -17,24 +17,26 @@ export const BudgetProgress = {
     `;
 
     const updateBars = () => {
-      const expenses = appStore.getCategoryExpenses();
+      const budgets = Array.isArray(appStore.state.budgets) ? appStore.state.budgets : [];
       const barsContainer = document.getElementById('budgetBarsContainer');
       if (!barsContainer) return;
 
-      if (Object.keys(expenses).length === 0) {
-        barsContainer.innerHTML = '<p class="empty-msg">No hay gastos registrados para calcular presupuestos.</p>';
+      if (budgets.length === 0) {
+        barsContainer.innerHTML = '<p class="empty-msg">No tienes presupuestos activos. ¡Crea el primero en el módulo de Presupuestos!</p>';
         return;
       }
 
       let html = '';
-      for (const [cat, amount] of Object.entries(expenses)) {
-        const limit = appStore.getBudgetLimit(cat);
-        const percent = Math.min((amount / limit) * 100, 100);
+      for (const b of budgets) {
+        const cat = b.categoria;
+        const limit = parseFloat(b.monto_limite) || 0;
+        const amount = parseFloat(b.gastado) || 0;
+        const percent = limit > 0 ? Math.min((amount / limit) * 100, 100) : 0;
         
         let colorClass = 'bar-normal';
         let badgeHtml = '';
         
-        if (percent >= 100) {
+        if (amount > limit && limit > 0) {
           colorClass = 'bar-danger';
           badgeHtml = '<span class="budget-alert-badge">¡Límite Superado!</span>';
         } else if (percent >= 70) {
@@ -59,8 +61,7 @@ export const BudgetProgress = {
       barsContainer.innerHTML = html;
     };
 
-    appStore.addEventListener('transaction_added', updateBars);
-    appStore.addEventListener('transaction_history_loaded', updateBars);
+    appStore.addEventListener('budgets_loaded', updateBars);
     updateBars();
   }
 };

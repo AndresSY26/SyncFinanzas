@@ -50,6 +50,14 @@ export const SocketClient = {
     socketInstance.on('budget:alert', (alertData) => {
       appStore.notifyAlert(alertData);
     });
+
+    socketInstance.on('budget:list:success', (budgets) => {
+      appStore.setBudgets(budgets);
+    });
+
+    socketInstance.on('goal:list:success', (goals) => {
+      appStore.setSavingsGoals(goals);
+    });
   },
 
   getSocket: () => socketInstance,
