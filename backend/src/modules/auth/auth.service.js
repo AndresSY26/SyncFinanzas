@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
@@ -5,6 +6,8 @@ import pool from '../../config/database.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_key_change_me';
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
 // Error personalizado para estructurar respuestas HTTP desde el servicio
 export class CustomError extends Error {
@@ -56,7 +59,7 @@ export const login = async ({ email, password }, reqMeta) => {
     locationToSave = 'Bogotá, Colombia';
   } else {
     try {
-      const response = await fetch(`http://ip-api.com/json/${reqMeta.ip}`);
+      const response = await fetch(`https://ip-api.com/json/${reqMeta.ip}`);
       const data = await response.json();
       if (data.status === 'success') {
         locationToSave = `${data.city}, ${data.country}`;
@@ -66,9 +69,11 @@ export const login = async ({ email, password }, reqMeta) => {
     }
   }
 
+  const hashedToken = hashToken(token);
+
   await pool.query(
     'INSERT INTO sessions (usuario_id, dispositivo, ip_origen, token_hash) VALUES ($1, $2, $3, $4)',
-    [user.id, reqMeta.userAgent, locationToSave, token]
+    [user.id, reqMeta.userAgent, locationToSave, hashedToken]
   );
 
   return { user, token };
@@ -90,9 +95,10 @@ export const revokeSessionById = async (sessionId, userId) => {
 };
 
 export const logoutSession = async (token) => {
+  const hashedToken = hashToken(token);
   await pool.query(
     'UPDATE sessions SET activa = false WHERE token_hash = $1',
-    [token]
+    [hashedToken]
   );
 };
 
@@ -145,7 +151,7 @@ export const googleAuthFlow = async ({ idToken }, reqMeta) => {
     locationToSave = 'Bogotá, Colombia';
   } else {
     try {
-      const response = await fetch(`http://ip-api.com/json/${reqMeta.ip}`);
+      const response = await fetch(`https://ip-api.com/json/${reqMeta.ip}`);
       const data = await response.json();
       if (data.status === 'success') {
         locationToSave = `${data.city}, ${data.country}`;
@@ -155,9 +161,11 @@ export const googleAuthFlow = async ({ idToken }, reqMeta) => {
     }
   }
 
+  const hashedToken = hashToken(token);
+
   await pool.query(
     'INSERT INTO sessions (usuario_id, dispositivo, ip_origen, token_hash) VALUES ($1, $2, $3, $4)',
-    [user.id, reqMeta.userAgent, locationToSave, token]
+    [user.id, reqMeta.userAgent, locationToSave, hashedToken]
   );
 
   return { user, token };
