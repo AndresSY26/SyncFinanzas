@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     nombre_completo VARCHAR(150) NOT NULL,
     is_social_login BOOLEAN DEFAULT false,
+    is_2fa_enabled BOOLEAN DEFAULT false,
+    totp_secret VARCHAR(255),
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -60,3 +62,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     activa BOOLEAN DEFAULT true,
     ultima_conexion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Índices de Rendimiento Críticos
+CREATE INDEX IF NOT EXISTS idx_sessions_token_hash ON sessions(token_hash);
+CREATE INDEX IF NOT EXISTS idx_transactions_usuario_fecha ON transactions(usuario_id, fecha DESC);

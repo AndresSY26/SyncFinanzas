@@ -101,6 +101,7 @@ export const TransactionModal = {
               <option value="EUR">EUR</option>
               <option value="MXN">MXN</option>
             </select>
+            <input type="date" id="modalTxFecha" required class="custom-select" style="flex: 1;" title="Fecha de la transacción">
             <input type="text" id="modalTxMonto" placeholder="Monto (ej: 1.000,50)" required style="flex: 2;">
           </div>
           
@@ -182,6 +183,11 @@ export const TransactionModal = {
       });
 
       // Submit logic
+      // Set default date to today
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('modalTxFecha').value = today;
+      document.getElementById('modalTxFecha').max = today;
+
       document.getElementById('modalTransactionForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const inputMontoRaw = document.getElementById('modalTxMonto').value.replace(/\D/g, '');
@@ -193,6 +199,7 @@ export const TransactionModal = {
           tipo: tipo,
           monto: inputMonto,
           moneda: document.getElementById('modalTxMoneda').value,
+          fecha: document.getElementById('modalTxFecha').value,
           categoria: tipo === 'transfer' ? 'Transferencia' : document.getElementById('modalTxCategoria').value,
           descripcion: document.getElementById('modalTxDescripcion').value
         };

@@ -77,14 +77,15 @@ export const renderSettings = (container) => {
 
         <div id="twoFaSetupState" style="display: none; animation: fadeIn 0.3s ease;">
           <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">Escanea este código QR con tu aplicación de autenticación:</p>
-          <div class="qr-mock">
-            <i class="ri-qr-code-line" style="font-size: 5rem; color: var(--primary-purple);"></i>
+          <div class="qr-mock" id="qrCodeContainer">
+            <img src="" id="qrCodeImage" alt="QR Code" style="display: none; width: 150px; height: 150px; border-radius: 8px;">
+            <i class="ri-qr-code-line" id="qrCodeIconPlaceholder" style="font-size: 5rem; color: var(--primary-purple);"></i>
           </div>
           <div class="input-group" style="margin-bottom: 15px;">
             <label class="settings-label">O ingresa esta llave secreta manualmente:</label>
             <div style="display: flex; gap: 10px;">
-              <input type="text" class="settings-input" value="G3J7 V2KX P9MZ L4QW" readonly style="font-family: monospace; letter-spacing: 2px; text-align: center;">
-              <button type="button" class="settings-btn active-btn" style="width: auto; margin: 0; padding: 0 15px;" onclick="navigator.clipboard.writeText('G3J7V2KXP9MZL4QW')"><i class="ri-clipboard-line"></i></button>
+              <input type="text" id="manualSecret" class="settings-input" value="Generando..." readonly style="font-family: monospace; letter-spacing: 2px; text-align: center;">
+              <button type="button" class="settings-btn active-btn" style="width: auto; margin: 0; padding: 0 15px;" onclick="navigator.clipboard.writeText(document.getElementById('manualSecret').value)"><i class="ri-clipboard-line"></i></button>
             </div>
           </div>
           <form id="form2FA">
@@ -336,24 +337,41 @@ const attachEvents = () => {
   secConfirm.addEventListener('input', checkSecurityChanges);
 
   // Submit Profile
-  profileForm.addEventListener('submit', (e) => {
+  profileForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    appStore.updateUser({
-      nombre_completo: profFullName.value.trim(),
-      username: profUsername.value.trim()
-      // email is readonly
-    });
-    showNotification('¡Configuración de perfil actualizada con éxito! ✓', 'success');
     
-    // reset button state
+    const originalText = btnSaveProfile.textContent;
+    btnSaveProfile.textContent = 'Guardando...';
     btnSaveProfile.disabled = true;
-    btnSaveProfile.classList.remove('active-btn');
+
+    try {
+      const response = await apiClient('/auth/updateProfile', {
+        method: 'PUT',
+        body: JSON.stringify({
+          nombre_completo: profFullName.value.trim(),
+          username: profUsername.value.trim()
+        })
+      });
+
+      if (response.user) {
+        appStore.updateUser(response.user);
+        showNotification(response.message || '¡Configuración de perfil actualizada con éxito! ✓', 'success');
+        btnSaveProfile.classList.remove('active-btn');
+      }
+    } catch (error) {
+      showNotification(error.message || 'Error al actualizar el perfil', 'error');
+      btnSaveProfile.disabled = false;
+      btnSaveProfile.classList.add('active-btn');
+    } finally {
+      btnSaveProfile.textContent = originalText;
+    }
   });
 
   // Submit Security
-  securityForm.addEventListener('submit', (e) => {
+  securityForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    const cur = secCurrent.value.trim();
     const nw = secNew.value.trim();
     const cnf = secConfirm.value.trim();
 
@@ -361,12 +379,29 @@ const attachEvents = () => {
       return showNotification('Las contraseñas no coinciden. Verifícalas e intenta de nuevo.', 'error');
     }
 
-    // Simulate security update
-    showNotification('¡Credenciales de seguridad actualizadas con éxito! ✓', 'success');
-    
-    securityForm.reset();
+    const originalText = btnSaveSecurity.textContent;
+    btnSaveSecurity.textContent = 'Actualizando...';
     btnSaveSecurity.disabled = true;
-    btnSaveSecurity.classList.remove('active-btn');
+
+    try {
+      const response = await apiClient('/auth/changePassword', {
+        method: 'PUT',
+        body: JSON.stringify({
+          currentPassword: cur,
+          newPassword: nw
+        })
+      });
+
+      showNotification(response.message || '¡Credenciales de seguridad actualizadas con éxito! ✓', 'success');
+      securityForm.reset();
+      btnSaveSecurity.classList.remove('active-btn');
+    } catch (error) {
+      showNotification(error.message || 'Error al cambiar la contraseña', 'error');
+      btnSaveSecurity.disabled = false;
+      btnSaveSecurity.classList.add('active-btn');
+    } finally {
+      btnSaveSecurity.textContent = originalText;
+    }
   });
 
   // 2FA Logic
@@ -379,9 +414,20 @@ const attachEvents = () => {
   const stateActive = document.getElementById('twoFaActiveState');
 
   if (btnEnable2FA) {
-    btnEnable2FA.addEventListener('click', () => {
-      stateInitial.style.display = 'none';
-      stateSetup.style.display = 'block';
+    btnEnable2FA.addEventListener('click', async () => {
+      try {
+        const response = await apiClient('/auth/2fa/generate');
+        document.getElementById('qrCodeIconPlaceholder').style.display = 'none';
+        const img = document.getElementById('qrCodeImage');
+        img.src = response.qrCodeUrl;
+        img.style.display = 'inline-block';
+        document.getElementById('manualSecret').value = response.secret;
+
+        stateInitial.style.display = 'none';
+        stateSetup.style.display = 'block';
+      } catch (error) {
+        showNotification(error.message || 'Error al generar el 2FA', 'error');
+      }
     });
   }
 
@@ -396,7 +442,7 @@ const attachEvents = () => {
   // Format TOTP input (adds space in the middle: XXX XXX)
   if (totpInput) {
     totpInput.addEventListener('input', (e) => {
-      let val = e.target.value.replace(/\\D/g, '');
+      let val = e.target.value.replace(/\D/g, '');
       if (val.length > 3) {
         val = val.slice(0, 3) + ' ' + val.slice(3, 6);
       }
@@ -405,13 +451,21 @@ const attachEvents = () => {
   }
 
   if (form2FA) {
-    form2FA.addEventListener('submit', (e) => {
+    form2FA.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const code = totpInput.value.replace(/\\s/g, '');
+      const code = totpInput.value.replace(/\s/g, '');
       if (code.length === 6) {
-        stateSetup.style.display = 'none';
-        stateActive.style.display = 'block';
-        showNotification('Autenticación de Dos Factores (2FA) vinculada correctamente', 'success');
+        try {
+          await apiClient('/auth/2fa/enable', {
+            method: 'POST',
+            body: JSON.stringify({ token: code })
+          });
+          stateSetup.style.display = 'none';
+          stateActive.style.display = 'block';
+          showNotification('Autenticación de Dos Factores (2FA) vinculada correctamente', 'success');
+        } catch (error) {
+          showNotification(error.message || 'Error al habilitar 2FA', 'error');
+        }
       } else {
         showNotification('Código inválido. Asegúrate de ingresar 6 dígitos.', 'error');
       }

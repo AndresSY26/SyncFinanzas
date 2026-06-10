@@ -1,6 +1,7 @@
 import { apiClient } from './apiClient.js';
 import { SocketClient } from '../core/socket.js';
 import { Router } from '../core/router.js';
+import { appStore } from '../store/appStore.js';
 
 export const authService = {
   login: async (email, password) => {
@@ -8,7 +9,21 @@ export const authService = {
       method: 'POST',
       body: JSON.stringify({ email, password })
     });
-    authService.initSession(data.token);
+    
+    if (data.requiere_2fa) {
+      return data; // Return the flag and userId
+    }
+
+    authService.initSession(data.token, data.user);
+    return data;
+  },
+
+  verify2FALogin: async (userId, token) => {
+    const data = await apiClient('/auth/2fa/verify-login', {
+      method: 'POST',
+      body: JSON.stringify({ userId, token })
+    });
+    authService.initSession(data.token, data.user);
     return data;
   },
 
@@ -17,7 +32,7 @@ export const authService = {
       method: 'POST',
       body: JSON.stringify(payload)
     });
-    authService.initSession(data.token);
+    authService.initSession(data.token, data.user);
     return data;
   },
 
@@ -26,12 +41,15 @@ export const authService = {
       method: 'POST',
       body: JSON.stringify({ idToken })
     });
-    authService.initSession(data.token);
+    authService.initSession(data.token, data.user);
     return data;
   },
 
-  initSession: (token) => {
+  initSession: (token, user) => {
     localStorage.setItem('jwtToken', token);
+    if (user) {
+      appStore.updateUser(user);
+    }
     SocketClient.connect(token);
     Router.navigate('/dashboard');
   },

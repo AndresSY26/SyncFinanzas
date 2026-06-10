@@ -9,16 +9,27 @@ export const renderLogin = (container) => {
         <h2 id="formTitle" class="auth-title">Iniciar Sesión</h2>
         
         <form id="loginForm" class="auth-form" novalidate>
-          <div class="input-group">
-            <input type="email" id="loginEmail" class="auth-input" placeholder="Correo Electrónico">
-          </div>
-          <div class="input-group">
-            <input type="password" id="loginPassword" class="auth-input" placeholder="Contraseña">
-          </div>
-          <button type="submit" class="auth-btn">Ingresar al Dashboard</button>
+          <div id="loginStep1">
+            <div class="input-group">
+              <input type="email" id="loginEmail" class="auth-input" placeholder="Correo Electrónico">
+            </div>
+            <div class="input-group">
+              <input type="password" id="loginPassword" class="auth-input" placeholder="Contraseña">
+            </div>
+            <button type="submit" id="btnSubmitLogin" class="auth-btn">Ingresar al Dashboard</button>
 
-          <div class="auth-divider">o continúa con</div>
-          <div id="google-btn-login" class="google-btn-container"></div>
+            <div class="auth-divider">o continúa con</div>
+            <div id="google-btn-login" class="google-btn-container"></div>
+          </div>
+
+          <div id="loginStep2" style="display: none; animation: fadeIn 0.3s ease;">
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px; text-align: center;">Tu cuenta está protegida. Ingresa el código de 6 dígitos de tu aplicación autenticadora.</p>
+            <div class="input-group">
+              <input type="text" id="login2FAToken" class="auth-input" placeholder="000 000" maxlength="7" style="text-align: center; font-size: 1.2rem; letter-spacing: 2px;">
+            </div>
+            <button type="button" id="btnVerifyLogin2FA" class="auth-btn active-btn">Verificar e Ingresar</button>
+            <button type="button" id="btnCancelLogin2FA" class="settings-btn" style="width: 100%; margin-top: 10px;">Volver</button>
+          </div>
         </form>
 
         <form id="registerForm" class="auth-form" style="display: none;" novalidate>
@@ -105,21 +116,74 @@ export const renderLogin = (container) => {
     return isValid;
   };
 
+  // Variables for 2FA flow
+  let pendingUserId = null;
+
   // Submit de Login
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    // Si estamos en step 2, no procesar el form submit regular
+    if (document.getElementById('loginStep2').style.display === 'block') return;
+
     const emailInput = document.getElementById('loginEmail');
     const passwordInput = document.getElementById('loginPassword');
+    const btnSubmitLogin = document.getElementById('btnSubmitLogin');
     
     if (!validateInputs([emailInput, passwordInput])) return;
 
+    const originalText = btnSubmitLogin.textContent;
+    btnSubmitLogin.textContent = 'Autenticando...';
+    btnSubmitLogin.disabled = true;
+
     try {
-      await authService.login(emailInput.value, passwordInput.value);
+      const result = await authService.login(emailInput.value, passwordInput.value);
+      if (result.requiere_2fa) {
+        pendingUserId = result.userId;
+        document.getElementById('loginStep1').style.display = 'none';
+        document.getElementById('loginStep2').style.display = 'block';
+        document.getElementById('toggleForm').style.display = 'none';
+      }
     } catch (error) {
       triggerErrorFeedback();
       showNotification(error.message, 'error');
+    } finally {
+      btnSubmitLogin.textContent = originalText;
+      btnSubmitLogin.disabled = false;
     }
+  });
+
+  // Logica Step 2
+  const tokenInput = document.getElementById('login2FAToken');
+  tokenInput.addEventListener('input', (e) => {
+    let val = e.target.value.replace(/\D/g, '');
+    if (val.length > 3) {
+      val = val.slice(0, 3) + ' ' + val.slice(3, 6);
+    }
+    e.target.value = val;
+  });
+
+  document.getElementById('btnVerifyLogin2FA').addEventListener('click', async () => {
+    const code = tokenInput.value.replace(/\s/g, '');
+    if (code.length !== 6) {
+      showNotification('Debes ingresar 6 dígitos', 'error');
+      return;
+    }
+
+    try {
+      await authService.verify2FALogin(pendingUserId, code);
+    } catch (error) {
+      triggerErrorFeedback();
+      showNotification(error.message || 'Código incorrecto', 'error');
+    }
+  });
+
+  document.getElementById('btnCancelLogin2FA').addEventListener('click', () => {
+    document.getElementById('loginStep2').style.display = 'none';
+    document.getElementById('loginStep1').style.display = 'block';
+    document.getElementById('toggleForm').style.display = 'block';
+    tokenInput.value = '';
+    pendingUserId = null;
   });
 
   // Submit de Registro

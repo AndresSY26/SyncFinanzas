@@ -134,6 +134,26 @@
   display: flex;
   flex-direction: column;
   gap: 15px;
+  max-height: 350px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.sessions-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sessions-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sessions-list::-webkit-scrollbar-thumb {
+  background: rgba(123, 44, 191, 0.2);
+  border-radius: 10px;
+}
+
+.sessions-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(123, 44, 191, 0.5);
 }
 
 .session-row {

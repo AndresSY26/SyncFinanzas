@@ -27,7 +27,7 @@ export const transactionService = {
       // Auditoría de presupuesto si la transacción es un gasto
       if (tipo === 'expense') {
         // Llamado asíncrono fire-and-forget, no bloquea la respuesta principal
-        budgetService.checkBudgetAlert(usuario_id, categoria);
+        // budgetService.checkBudgetAlert(usuario_id, categoria);
       }
 
       return newTransaction;

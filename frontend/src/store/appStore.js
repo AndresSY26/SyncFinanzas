@@ -4,9 +4,9 @@ class AppStore extends EventTarget {
     super();
     this.state = {
       user: {
-        nombre_completo: 'Andres Rodriguez',
-        username: 'AndRoy',
-        email: 'andresksa123@gmail.com'
+        nombre_completo: '',
+        username: '',
+        email: ''
       },
       balance: [],
       transactions: [],
@@ -88,27 +88,16 @@ class AppStore extends EventTarget {
   }
 
   getBudgetLimit(categoria) {
-    if (!categoria) return 300;
+    if (!categoria) return 0;
     const cat = String(categoria);
-    if (cat === '__proto__' || cat === 'constructor' || cat === 'prototype') return 300;
+    if (cat === '__proto__' || cat === 'constructor' || cat === 'prototype') return 0;
 
     if (Array.isArray(this.state.budgets)) {
       const budgetObj = this.state.budgets.find(b => b.categoria === cat);
       if (budgetObj) return parseFloat(budgetObj.monto_limite);
     }
     
-    const fallbacks = new Map([
-      ['Comida', 500],
-      ['Transporte', 200],
-      ['Servicios', 300],
-      ['Entretenimiento', 250],
-      ['Otros', 150]
-    ]);
-    
-    if (fallbacks.has(cat)) {
-      return fallbacks.get(cat);
-    }
-    return 300;
+    return 0;
   }
 
   getBalance() {

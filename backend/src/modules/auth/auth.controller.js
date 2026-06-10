@@ -70,3 +70,54 @@ export const googleAuth = async (req, res) => {
     handleServiceError(error, res);
   }
 };
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const result = await authService.updateProfile(userId, req.body);
+    res.json(result);
+  } catch (error) {
+    handleServiceError(error, res);
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const result = await authService.changePassword(userId, req.body);
+    res.json(result);
+  } catch (error) {
+    handleServiceError(error, res);
+  }
+};
+
+export const generate2FA = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const result = await authService.generate2FA(userId);
+    res.json(result);
+  } catch (error) {
+    handleServiceError(error, res);
+  }
+};
+
+export const enable2FA = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const { token } = req.body;
+    const result = await authService.enable2FA(userId, token);
+    res.json(result);
+  } catch (error) {
+    handleServiceError(error, res);
+  }
+};
+
+export const verifyLogin2FA = async (req, res) => {
+  try {
+    const { userId, token } = req.body;
+    const result = await authService.verifyLogin2FA(userId, token, getRequestMeta(req));
+    res.json(result);
+  } catch (error) {
+    handleServiceError(error, res);
+  }
+};
