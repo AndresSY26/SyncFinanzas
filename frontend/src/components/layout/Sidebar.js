@@ -21,9 +21,7 @@ export const Sidebar = {
           <button class="sidebar-item ${currentPath === '/dashboard/transfers' ? 'active' : ''}" data-path="/dashboard/transfers">
             <i class="ri-arrow-left-right-line icon"></i> Transferencias y Envíos
           </button>
-          <button class="sidebar-item ${currentPath === '/dashboard/history' ? 'active' : ''}" data-path="/dashboard/history">
-            <i class="ri-file-list-3-line icon"></i> Historial Completo
-          </button>
+
           <button class="sidebar-item ${currentPath === '/dashboard/settings' ? 'active' : ''}" data-path="/dashboard/settings">
             <i class="ri-settings-3-line icon"></i> Configuración
           </button>

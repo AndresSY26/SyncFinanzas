@@ -42,6 +42,7 @@ The project follows a **Feature-Driven** and **Real-Time** architecture, cleanly
    - Standard email/password registration with a staged login process.
    - Cryptographic **Two-Factor Authentication (TOTP)** setup via QR code scanning.
    - 1-Click Login integration via Google Identity Services (One Tap).
+   - In-app **Profile Management** to easily update personal information and **Password Changing** capabilities.
    - Security auditing allowing users to review and revoke active sessions mapped by real geolocation and device names.
 
 2. **Real-Time Financial Dashboard:**

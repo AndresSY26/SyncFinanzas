@@ -6,6 +6,7 @@ import cors from 'cors';
 import { connectDB, initDB } from './config/database.js';
 import { setupSockets } from './socket/index.js';
 import authRoutes from './modules/auth/auth.routes.js';
+import { emailNotificationService } from './modules/analytics/emailNotification.service.js';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -43,6 +44,10 @@ const startServer = async () => {
   
   // 2. Inicializar estructura de base de datos (creación de tablas)
   await initDB();
+
+  // 2.5 Inicializar servicios de notificaciones asíncronas
+  emailNotificationService.init();
+  emailNotificationService.setupListeners();
 
   // 3. Levantar el servidor HTTP y WebSockets
   server.listen(PORT, () => {

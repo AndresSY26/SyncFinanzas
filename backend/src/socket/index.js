@@ -3,6 +3,8 @@ import { sessionManager } from './sessionManager.js';
 import { registerGlobalEventObservers, registerTransactionHandlers } from './handlers/transactionHandler.js';
 import { registerAccountHandlers } from './handlers/accountHandler.js';
 import { registerBudgetHandlers } from './handlers/budgetHandler.js';
+import { registerPredictionHandlers } from './handlers/predictionHandler.js';
+import { registerCoachHandlers } from './handlers/coachHandler.js';
 
 export const setupSockets = (io) => {
   // 1. Aplicar middleware de autenticación global a todos los sockets entrantes
@@ -22,6 +24,8 @@ export const setupSockets = (io) => {
     registerTransactionHandlers(io, socket);
     registerAccountHandlers(io, socket);
     registerBudgetHandlers(io, socket);
+    registerPredictionHandlers(io, socket);
+    registerCoachHandlers(io, socket);
     // --------------------------------------------------
 
     // 3. Manejar evento de desconexión

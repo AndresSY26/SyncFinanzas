@@ -24,10 +24,11 @@ export const transactionService = {
       // El socket escuchará este evento y enviará el push al cliente.
       appEvents.emit('balance:changed', usuario_id);
 
-      // Auditoría de presupuesto si la transacción es un gasto
+      // Auditoría asíncrona de eventos de dominio
       if (tipo === 'expense') {
-        // Llamado asíncrono fire-and-forget, no bloquea la respuesta principal
-        // budgetService.checkBudgetAlert(usuario_id, categoria);
+        appEvents.emit('transaction:expense', newTransaction);
+      } else if (tipo === 'income') {
+        appEvents.emit('transaction:income', newTransaction);
       }
 
       return newTransaction;
@@ -62,6 +63,10 @@ export const transactionService = {
       
       // Emitir el evento de reactividad para actualizar el balance
       appEvents.emit('balance:changed', usuario_id);
+      
+      // Emitir eventos granulares
+      appEvents.emit('transaction:expense', res1.rows[0]);
+      appEvents.emit('transaction:income', res2.rows[0]);
       
       return [res1.rows[0], res2.rows[0]];
     } catch (error) {

@@ -5,6 +5,7 @@ import { BudgetProgress } from '../../components/dashboard/BudgetProgress.js';
 import { DonutChart } from '../../components/dashboard/DonutChart.js';
 import { TrendChart } from '../../components/dashboard/TrendChart.js';
 import { SavingsGoal } from '../../components/dashboard/SavingsGoal.js';
+import { SmartCoach } from '../../components/dashboard/SmartCoach.js';
 import { formatCurrency } from '../../utils/formatters.js';
 import { TransactionModal } from '../../components/dashboard/TransactionModal.js';
 
@@ -74,6 +75,8 @@ export const renderOverview = (container) => {
       <!-- Columna Derecha -->
       <div style="display: flex; flex-direction: column; gap: 20px;">
         
+        <div id="smartCoachRoot"></div>
+
         <div class="card" style="height: fit-content; margin-bottom: 0;">
           <h3 style="margin-top: 0; border-bottom: 2px solid rgba(123, 44, 191, 0.2); padding-bottom: 10px; color: var(--text-primary);">Historial de Transacciones</h3>
           <ul id="historyList" class="history-list">
@@ -332,9 +335,22 @@ export const renderOverview = (container) => {
     socket.emit('transaction:list');
     socket.emit('budget:list');
     socket.emit('goal:list');
+    socket.emit('analytics:getProjection');
+    socket.emit('analytics:getCoachInsight');
     if (appStore.state.paymentMethods.length === 0) {
       socket.emit('account:list');
     }
+    
+    // Unica vez que registramos el listener del socket
+    socket.off('analytics:projection_loaded');
+    socket.on('analytics:projection_loaded', (data) => {
+      appStore.dispatchEvent(new CustomEvent('predictions_loaded', { detail: data }));
+    });
+
+    socket.off('analytics:coach_insight_loaded');
+    socket.on('analytics:coach_insight_loaded', (data) => {
+      appStore.dispatchEvent(new CustomEvent('coach_insight_loaded', { detail: data }));
+    });
   }
 
   // Mount components
@@ -342,6 +358,7 @@ export const renderOverview = (container) => {
   DonutChart.render('donutChartRoot');
   TrendChart.render('trendChartRoot');
   SavingsGoal.render('savingsGoalRoot');
+  SmartCoach.render('smartCoachRoot');
 
   // Abrir Modal de Transacciones
   document.getElementById('btnOpenTxModal').addEventListener('click', () => {

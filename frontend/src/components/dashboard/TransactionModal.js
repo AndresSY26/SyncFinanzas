@@ -81,17 +81,9 @@ export const TransactionModal = {
             ${optionsHtml}
           </select>
           
-          <div id="transferDestContainer" style="display: none;">
-            <select id="modalTxDestino" class="custom-select">
-              <option value="" disabled selected>Selecciona Cuenta de Destino...</option>
-              ${optionsHtml}
-            </select>
-          </div>
-          
           <select id="modalTxTipo" required class="custom-select">
             <option value="income">Ingreso (+)</option>
             <option value="expense">Gasto (-)</option>
-            <option value="transfer">Transferencia (⇄)</option>
           </select>
           
           <div style="display: flex; gap: 10px;">
@@ -137,50 +129,7 @@ export const TransactionModal = {
         }).format(floatValue);
       });
 
-      // UI Reactivity for Transfers
-      const txTipoEl = document.getElementById('modalTxTipo');
-      const destContainer = document.getElementById('transferDestContainer');
-      const destSelect = document.getElementById('modalTxDestino');
-      const catSelect = document.getElementById('modalTxCategoria');
-      const btnProcesar = document.getElementById('btnProcesarTx');
-      const originSelect = document.getElementById('modalTxCuenta');
 
-      const checkTransferValidation = () => {
-        if (txTipoEl.value === 'transfer') {
-          if (originSelect.value && destSelect.value && originSelect.value === destSelect.value) {
-            btnProcesar.disabled = true;
-            btnProcesar.style.opacity = '0.5';
-            btnProcesar.textContent = 'Cuentas origen y destino iguales';
-          } else {
-            btnProcesar.disabled = false;
-            btnProcesar.style.opacity = '1';
-            btnProcesar.textContent = 'Procesar Transacción';
-          }
-        }
-      };
-
-      originSelect.addEventListener('change', checkTransferValidation);
-      destSelect.addEventListener('change', checkTransferValidation);
-
-      txTipoEl.addEventListener('change', (e) => {
-        if (e.target.value === 'transfer') {
-          destContainer.style.display = 'block';
-          destSelect.required = true;
-          catSelect.style.display = 'none';
-          catSelect.required = false;
-          originSelect.options[0].text = "Selecciona Cuenta de Origen...";
-        } else {
-          destContainer.style.display = 'none';
-          destSelect.required = false;
-          catSelect.style.display = 'block';
-          catSelect.required = true;
-          originSelect.options[0].text = "Selecciona Cuenta o Billetera...";
-          btnProcesar.disabled = false;
-          btnProcesar.style.opacity = '1';
-          btnProcesar.textContent = 'Procesar Transacción';
-        }
-        checkTransferValidation();
-      });
 
       // Submit logic
       // Set default date to today
@@ -200,13 +149,9 @@ export const TransactionModal = {
           monto: inputMonto,
           moneda: document.getElementById('modalTxMoneda').value,
           fecha: document.getElementById('modalTxFecha').value,
-          categoria: tipo === 'transfer' ? 'Transferencia' : document.getElementById('modalTxCategoria').value,
+          categoria: document.getElementById('modalTxCategoria').value,
           descripcion: document.getElementById('modalTxDescripcion').value
         };
-
-        if (tipo === 'transfer') {
-          payload.cuenta_destino_id = document.getElementById('modalTxDestino').value;
-        }
 
         socket.emit('transaction:create', payload);
         closeModal();

@@ -40,21 +40,19 @@ export const renderDashboard = (container, path) => {
     renderOverview(contentDiv);
   } else if (path === '/dashboard/payments') {
     renderPayments(contentDiv);
-  } else if (path === '/dashboard/history') {
+  } else if (path === '/dashboard/transfers' || path === '/dashboard/history') {
     renderHistory(contentDiv);
   } else if (path === '/dashboard/settings') {
     renderSettings(contentDiv);
   } else if (path === '/dashboard/budgets') {
     renderBudgets(contentDiv);
   } else {
-    let title = 'Vista en construcción';
-    if (path === '/dashboard/transfers') title = 'Transferencias y Envíos';
-    
+    // Fallback simple por si se accede a una ruta desconocida
     contentDiv.innerHTML = `
       <div class="empty-payments-state" style="max-width: 500px; margin: 40px auto; padding: 60px 30px;">
-        <i class="ri-tools-fill" style="font-size: 4rem; color: #ccc; margin-bottom: 20px;"></i>
-        <h2 style="color: var(--text-primary); margin-bottom: 15px;">${title}</h2>
-        <p style="color: var(--text-secondary); font-size: 1.05rem;">Este módulo es parte de la suite premium y estará disponible próximamente en futuras actualizaciones.</p>
+        <i class="ri-route-line" style="font-size: 4rem; color: #ccc; margin-bottom: 20px;"></i>
+        <h2 style="color: var(--text-primary); margin-bottom: 15px;">Ruta no encontrada</h2>
+        <p style="color: var(--text-secondary); font-size: 1.05rem;">La sección solicitada no existe o fue movida.</p>
       </div>
     `;
   }
