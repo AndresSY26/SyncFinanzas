@@ -3,6 +3,8 @@
 ## 📖 Project Overview
 **SyncFinanzas** is a high-fidelity, reactive web financial suite designed to provide users with complete control over their personal finances. Built with real-time capabilities at its core, the platform allows users to manage multiple accounts, track transactions, set budgets, and achieve savings goals seamlessly. Its architecture is deeply modular, ensuring high performance, scalability, and maintainability.
 
+> 🏆 **v1.5.0 Milestone**: SyncFinanzas is now **100% Mock-Free**. Every single chart, balance, and setting in the dashboard is authentically powered by a real, live PostgreSQL database and a reactive WebSocket engine. 
+
 ---
 
 ## 🏛 Architecture
@@ -12,11 +14,13 @@ The project follows a **Feature-Driven** and **Real-Time** architecture, cleanly
 ### Backend (`/backend`)
 - **Framework:** Node.js with Express.js.
 - **Real-Time Communication:** Driven by **Socket.io**. While authentication utilizes standard HTTP REST endpoints, the core financial data operations (Transactions, Accounts, Budgets, Goals) flow over WebSockets. This reactive pattern ensures instantaneous updates to the connected client.
-- **Database:** PostgreSQL, accessed via a centralized connection pool (`pg`). The relational schema (`schema.sql`) efficiently manages users, accounts, transactions, budgets, goals, and active sessions.
-- **Authentication:** Hybrid security strategy.
+- **Database:** PostgreSQL, accessed via a centralized connection pool (`pg`). The relational schema (`schema.sql`) efficiently manages users, accounts, transactions, budgets, goals, and active sessions, featuring highly optimized indexes for instant querying.
+- **Authentication:** Advanced Hybrid Security Strategy.
   - Local credentials encrypted securely with `bcrypt`.
   - Google OAuth2 Integration using `google-auth-library`.
-  - JSON Web Tokens (JWT) for session persistence and validation.
+  - **Two-Factor Authentication (2FA)** powered by `otplib` (TOTP) and `qrcode`.
+  - Staged Login flows and persistent, hash-protected JSON Web Tokens (JWT) for secure session revocation.
+  - Native IP Geolocation and User-Agent tracking for granular session monitoring.
 - **Structure:** Modular Feature-Driven structure. Each domain encapsulates its own handlers, controllers, and routes, decoupling the business logic from the transport layer.
 
 ### Frontend (`/frontend`)
@@ -34,10 +38,11 @@ The project follows a **Feature-Driven** and **Real-Time** architecture, cleanly
 
 ## ✨ Key Features
 
-1. **Hybrid Security & Authentication:**
-   - Standard email/password registration.
+1. **Hybrid Security & 2FA Authentication:**
+   - Standard email/password registration with a staged login process.
+   - Cryptographic **Two-Factor Authentication (TOTP)** setup via QR code scanning.
    - 1-Click Login integration via Google Identity Services (One Tap).
-   - Security auditing allowing users to review and revoke active sessions by IP and Device.
+   - Security auditing allowing users to review and revoke active sessions mapped by real geolocation and device names.
 
 2. **Real-Time Financial Dashboard:**
    - Live synchronization of total balances across all accounts.
@@ -57,7 +62,7 @@ The project follows a **Feature-Driven** and **Real-Time** architecture, cleanly
    - Real-time alerts when budgets are approaching or exceeding limits.
 
 6. **Savings Goals Widget:**
-   - Set financial goals and visually track real-time funding progress.
+   - Set financial goals attached to specific linked accounts and visually track real-time funding progress.
 
 ---
 
@@ -71,7 +76,7 @@ The project follows a **Feature-Driven** and **Real-Time** architecture, cleanly
 ### 1. Database Configuration
 1. Ensure PostgreSQL is installed and running on your system.
 2. Create a database named `syncfinanzas_db`.
-3. The backend script will automatically execute `schema.sql` to create the required tables upon the first connection.
+3. The backend script will automatically execute `schema.sql` to create the required tables and indexes upon the first connection.
 
 ### 2. Backend Setup
 1. Open a terminal and navigate to the backend directory:
