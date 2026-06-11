@@ -38,6 +38,7 @@ export const emailNotificationService = {
       });
     } catch (error) {
       console.error('Error enviando correo SMTP:', error);
+      throw error;
     }
   },
 
@@ -55,18 +56,22 @@ export const emailNotificationService = {
   setupListeners: () => {
     // Escuchar GASTOS para validar Presupuestos rotos
     appEvents.on('transaction:expense', async (tx) => {
+      if (tx.isTransfer) return;
       try {
         const budgets = await budgetService.listBudgets(tx.usuario_id);
         const categoryBudget = budgets.find(b => b.categoria === tx.categoria);
         
-        if (categoryBudget) {
+        if (categoryBudget && !categoryBudget.notificacion_enviada) {
           // Si el gasto acumulado (+ este último tx) supera el límite
           const totalGastado = parseFloat(categoryBudget.gastado);
           const limite = parseFloat(categoryBudget.monto_limite);
           
           if (totalGastado > limite) {
-            const email = await emailNotificationService.getUserEmail(tx.usuario_id);
-            if (!email) return;
+            const updateRes = await pool.query('UPDATE budgets SET notificacion_enviada = true WHERE id = $1 AND notificacion_enviada = false', [categoryBudget.id]);
+            
+            if (updateRes.rowCount > 0) {
+              const email = await emailNotificationService.getUserEmail(tx.usuario_id);
+              if (!email) return;
 
             const html = `
               <!DOCTYPE html>
@@ -239,7 +244,13 @@ export const emailNotificationService = {
               </body>
               </html>
             `;
-            await emailNotificationService.sendEmail(email, '[SyncFinanzas] ⚠️ Alerta de Control: Límite de Presupuesto Superado', html);
+              try {
+                await emailNotificationService.sendEmail(email, '[SyncFinanzas] ⚠️ Alerta de Control: Límite de Presupuesto Superado', html);
+              } catch (err) {
+                await pool.query('UPDATE budgets SET notificacion_enviada = false WHERE id = $1', [categoryBudget.id]);
+                console.error('Error enviando email SMTP (Presupuestos), flag revertido a false', err);
+              }
+            }
           }
         }
       } catch (error) {
@@ -249,21 +260,25 @@ export const emailNotificationService = {
 
     // Escuchar INGRESOS para validar Metas completadas
     appEvents.on('transaction:income', async (tx) => {
+      if (tx.isTransfer) return;
       try {
         const goals = await goalService.listGoals(tx.usuario_id);
         
         // Revisar si algún goal acaba de alcanzar su objetivo. 
         // Asumiendo que el goal.monto_actual (progreso_calculado) ya incluye el depósito porque la transacción ya fue insertada.
         for (const goal of goals) {
-          if (goal.cuenta_id === tx.cuenta_id) {
+          if (goal.cuenta_id === tx.cuenta_id && !goal.notificacion_enviada) {
             const actual = parseFloat(goal.monto_actual);
             const objetivo = parseFloat(goal.monto_objetivo);
             
             // Lógica para enviar si es mayor o igual al 100%
             // Idealmente se debería comprobar si "recién" se completó, pero esto sirve para notificar 
             if (actual >= objetivo) {
-              const email = await emailNotificationService.getUserEmail(tx.usuario_id);
-              if (!email) return;
+              const updateRes = await pool.query('UPDATE savings_goals SET notificacion_enviada = true WHERE id = $1 AND notificacion_enviada = false', [goal.id]);
+              
+              if (updateRes.rowCount > 0) {
+                const email = await emailNotificationService.getUserEmail(tx.usuario_id);
+                if (!email) return;
 
               const html = `
                 <!DOCTYPE html>
@@ -435,7 +450,13 @@ export const emailNotificationService = {
                 </body>
                 </html>
               `;
-              await emailNotificationService.sendEmail(email, '[SyncFinanzas] 🎉 ¡Meta de Ahorro Alcanzada!', html);
+                try {
+                  await emailNotificationService.sendEmail(email, '[SyncFinanzas] 🎉 ¡Meta de Ahorro Alcanzada!', html);
+                } catch (err) {
+                  await pool.query('UPDATE savings_goals SET notificacion_enviada = false WHERE id = $1', [goal.id]);
+                  console.error('Error enviando email SMTP (Metas), flag revertido a false', err);
+                }
+              }
             }
           }
         }

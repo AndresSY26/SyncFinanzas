@@ -8,6 +8,10 @@ export const transactionService = {
    * y emite internamente un evento para notificar que el balance cambió.
    */
   createTransaction: async ({ usuario_id, cuenta_id, tipo, monto, moneda, categoria, descripcion }) => {
+    const numericMonto = Number(monto);
+    if (isNaN(numericMonto) || numericMonto <= 0) {
+      throw new Error('HTTP 400: El monto de la transacción debe ser un número mayor a cero');
+    }
     const query = `
       INSERT INTO transactions (usuario_id, cuenta_id, tipo, monto, moneda, categoria, descripcion)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -43,10 +47,47 @@ export const transactionService = {
    * Un gasto en la cuenta origen y un ingreso en la cuenta destino.
    */
   createTransfer: async ({ usuario_id, cuenta_id, cuenta_destino_id, monto, moneda, categoria, descripcion }) => {
+    const numericMonto = Number(monto);
+    if (isNaN(numericMonto) || numericMonto <= 0) {
+      throw new Error('HTTP 400: El monto de la transferencia debe ser un número mayor a cero');
+    }
+    if (cuenta_id === cuenta_destino_id) {
+      throw new Error('La cuenta de origen y destino no pueden ser la misma');
+    }
+
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
       
+      // Validación de sobregiro y divisa cruzada
+      const balanceOrigenQuery = `
+        SELECT COALESCE(SUM(CASE WHEN tipo = 'income' THEN monto ELSE -monto END), 0) as current_balance,
+               MAX(moneda) as moneda_principal
+        FROM transactions 
+        WHERE cuenta_id = $1 AND usuario_id = $2
+      `;
+      const balanceDestinoQuery = `
+        SELECT MAX(moneda) as moneda_principal
+        FROM transactions
+        WHERE cuenta_id = $1 AND usuario_id = $2
+      `;
+
+      const origenRes = await client.query(balanceOrigenQuery, [cuenta_id, usuario_id]);
+      const currentBalance = parseFloat(origenRes.rows[0].current_balance);
+      const monedaOrigen = origenRes.rows[0].moneda_principal;
+
+      if (currentBalance < numericMonto) {
+        throw new Error('Fondos insuficientes en la cuenta de origen');
+      }
+
+      const destinoRes = await client.query(balanceDestinoQuery, [cuenta_destino_id, usuario_id]);
+      const monedaDestino = destinoRes.rows[0].moneda_principal;
+      const monedaTx = moneda || 'COP';
+
+      if ((monedaOrigen && monedaOrigen !== monedaTx) || (monedaDestino && monedaDestino !== monedaTx)) {
+        throw new Error('No se permiten transferencias con monedas cruzadas (divisas diferentes)');
+      }
+
       const query = `
         INSERT INTO transactions (usuario_id, cuenta_id, tipo, monto, moneda, categoria, descripcion)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -54,25 +95,25 @@ export const transactionService = {
       `;
       
       // 1. Gasto de la cuenta origen
-      const res1 = await client.query(query, [usuario_id, cuenta_id, 'expense', monto, moneda || 'COP', categoria, descripcion]);
+      const res1 = await client.query(query, [usuario_id, cuenta_id, 'expense', numericMonto, monedaTx, categoria, descripcion]);
       
       // 2. Ingreso a la cuenta destino
-      const res2 = await client.query(query, [usuario_id, cuenta_destino_id, 'income', monto, moneda || 'COP', categoria, descripcion]);
+      const res2 = await client.query(query, [usuario_id, cuenta_destino_id, 'income', numericMonto, monedaTx, categoria, descripcion]);
       
       await client.query('COMMIT');
       
       // Emitir el evento de reactividad para actualizar el balance
       appEvents.emit('balance:changed', usuario_id);
       
-      // Emitir eventos granulares
-      appEvents.emit('transaction:expense', res1.rows[0]);
-      appEvents.emit('transaction:income', res2.rows[0]);
+      // Emitir eventos granulares con el flag isTransfer para no gatillar falsos positivos en metas/presupuestos
+      appEvents.emit('transaction:expense', { ...res1.rows[0], isTransfer: true });
+      appEvents.emit('transaction:income', { ...res2.rows[0], isTransfer: true });
       
       return [res1.rows[0], res2.rows[0]];
     } catch (error) {
       await client.query('ROLLBACK');
       console.error('Error al insertar transferencia:', error.message);
-      throw new Error('No se pudo crear la transferencia');
+      throw new Error(error.message || 'No se pudo crear la transferencia');
     } finally {
       client.release();
     }

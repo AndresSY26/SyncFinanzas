@@ -3,7 +3,7 @@
 ## 📖 Project Overview
 **SyncFinanzas** is a high-fidelity, reactive web financial suite designed to provide users with complete control over their personal finances. Built with real-time capabilities at its core, the platform allows users to manage multiple accounts, track transactions, set budgets, and achieve savings goals seamlessly. Its architecture is deeply modular, ensuring high performance, scalability, and maintainability.
 
-> 🏆 **v1.5.0 Milestone**: SyncFinanzas is now **100% Mock-Free**. Every single chart, balance, and setting in the dashboard is authentically powered by a real, live PostgreSQL database and a reactive WebSocket engine. 
+> 🏆 **v1.7.0 Milestone**: SyncFinanzas introduces **"Blindaje integral V10"**. Featuring atomic Core Bancario validations, a fault-tolerant SMTP layer, and an optimized Gemini Cache system. Every single chart, balance, and setting in the dashboard is authentically powered by a real, live PostgreSQL database and a reactive WebSocket engine. 
 
 ---
 
@@ -14,14 +14,16 @@ The project follows a **Feature-Driven** and **Real-Time** architecture, cleanly
 ### Backend (`/backend`)
 - **Framework:** Node.js with Express.js.
 - **Real-Time Communication:** Driven by **Socket.io**. While authentication utilizes standard HTTP REST endpoints, the core financial data operations (Transactions, Accounts, Budgets, Goals) flow over WebSockets. This reactive pattern ensures instantaneous updates to the connected client.
-- **Database:** PostgreSQL, accessed via a centralized connection pool (`pg`). The relational schema (`schema.sql`) efficiently manages users, accounts, transactions, budgets, goals, and active sessions, featuring highly optimized indexes for instant querying.
+- **Database (Core Bancario):** PostgreSQL, accessed via a centralized connection pool (`pg`). The relational schema (`schema.sql`) efficiently manages data with highly optimized indexes. It features **atomic transactions (`BEGIN/COMMIT`)** with strict banking-level protections against account overdrafts and cross-currency mismatches.
 - **Authentication:** Advanced Hybrid Security Strategy.
   - Local credentials encrypted securely with `bcrypt`.
   - Google OAuth2 Integration using `google-auth-library`.
   - **Two-Factor Authentication (2FA)** powered by `otplib` (TOTP) and `qrcode`.
   - Staged Login flows and persistent, hash-protected JSON Web Tokens (JWT) for secure session revocation.
   - Native IP Geolocation and User-Agent tracking for granular session monitoring.
-- **Structure:** Modular Feature-Driven structure. Each domain encapsulates its own handlers, controllers, and routes, decoupling the business logic from the transport layer.
+- **AI & Analytics (Gemini Cache):** Integrates `@google/generative-ai` (Gemini 2.5 Flash) for providing real-time financial insights based on predictive linear regression models. Implements an **in-memory Cache TTL layer** to prevent excessive LLM API calls, optimizing costs and latency.
+- **Notifications (Fault-Tolerant SMTP):** Automated email delivery via `nodemailer` for critical budget alerts and savings goal achievements, featuring automatic rollback mechanisms if the SMTP server fails.
+- **Structure:** Modular Feature-Driven structure. Each domain (including the new `analytics` module) encapsulates its own handlers, controllers, and routes, decoupling the business logic from the transport layer.
 
 ### Frontend (`/frontend`)
 - **Framework:** Vanilla JavaScript bundled via **Vite**. The client avoids heavy UI frameworks (like React or Vue) in favor of deep DOM manipulation and native Web API usage, delivering a lightweight and extremely fast user experience.
@@ -65,6 +67,20 @@ The project follows a **Feature-Driven** and **Real-Time** architecture, cleanly
 6. **Savings Goals Widget:**
    - Set financial goals attached to specific linked accounts and visually track real-time funding progress.
 
+7. **🤖 AI Smart Coach (Gemini Cache):**
+   - Real-time financial insights powered by Google Gemini 2.5 Flash.
+   - Evaluates a user's financial context (budgets, goals, and linear regression spending predictions) to generate proactive alerts, immediate actions, and savings strategies.
+   - Supported by a robust in-memory caching system to guarantee low-latency performance and prevent redundant API queries.
+
+8. **📧 Fault-Tolerant Automated Email Notifications:**
+   - Intelligent event-driven triggers via SMTP (Nodemailer).
+   - Instant rich-HTML email alerts when budget limits are breached or when savings goals are successfully accomplished.
+   - Built-in SQL state rollback mechanisms to prevent data desync in case of SMTP server unreachability.
+
+9. **⇄ Internal Transfers (Core Bancario):**
+   - Seamlessly transfer funds between your own linked accounts (e.g., from Bank to Wallet) with a dedicated UI flow.
+   - Backed by strict atomic `BEGIN/COMMIT` Postgres transactions ensuring overdraft prevention and cross-currency rejection logic.
+
 ---
 
 ## 🚀 Setup Instructions
@@ -90,6 +106,11 @@ The project follows a **Feature-Driven** and **Real-Time** architecture, cleanly
    DATABASE_URL=postgresql://<user>:<password>@localhost:5432/syncfinanzas_db
    JWT_SECRET=your_super_secret_jwt_key
    GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+   GEMINI_API_KEY=your_gemini_api_key_for_smart_coach
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_PORT=587
+   EMAIL_USER=your_email@gmail.com
+   EMAIL_PASS=your_app_password
    ```
 3. Install the dependencies:
    ```bash

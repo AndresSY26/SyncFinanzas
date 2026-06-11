@@ -23,6 +23,7 @@ export const budgetService = {
     const values = [usuario_id, categoria, monto_limite, fecha_inicio, fecha_fin, recurrencia];
     try {
       const result = await pool.query(query, values);
+      appEvents.emit('budget:changed', usuario_id);
       return result.rows[0];
     } catch (error) {
       console.error('Error al crear presupuesto:', error.message);
@@ -95,6 +96,7 @@ export const budgetService = {
   deleteBudget: async (usuario_id, id) => {
     try {
       await pool.query('DELETE FROM budgets WHERE id = $1 AND usuario_id = $2', [id, usuario_id]);
+      appEvents.emit('budget:changed', usuario_id);
       return true;
     } catch (error) {
       console.error('Error al eliminar presupuesto:', error.message);
@@ -124,6 +126,7 @@ export const budgetService = {
     const values = [categoria, monto_limite, fecha_inicio, fecha_fin, recurrencia, id, usuario_id];
     try {
       const result = await pool.query(query, values);
+      appEvents.emit('budget:changed', usuario_id);
       return result.rows[0];
     } catch (error) {
       console.error('Error al actualizar presupuesto:', error.message);

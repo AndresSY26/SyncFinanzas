@@ -2,10 +2,31 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { budgetService } from '../budgets/budget.service.js';
 import { goalService } from '../goals/goal.service.js';
 import { predictionService } from './prediction.service.js';
+import { appEvents } from '../../utils/eventEmitter.js';
+
+const coachCache = new Map();
+
+appEvents.on('balance:changed', (usuario_id) => {
+  if (usuario_id && coachCache.has(usuario_id)) coachCache.delete(usuario_id);
+});
+appEvents.on('budget:changed', (usuario_id) => {
+  if (usuario_id && coachCache.has(usuario_id)) coachCache.delete(usuario_id);
+});
+appEvents.on('goal:changed', (usuario_id) => {
+  if (usuario_id && coachCache.has(usuario_id)) coachCache.delete(usuario_id);
+});
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
 
 export const coachService = {
   getInsight: async (usuario_id) => {
     try {
+      if (coachCache.has(usuario_id)) {
+        const cached = coachCache.get(usuario_id);
+        if (Date.now() - cached.timestamp < CACHE_TTL_MS) {
+          return cached.data;
+        }
+      }
+
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
         return {
@@ -59,20 +80,21 @@ DEBES responder ESTRICTAMENTE y ÚNICAMENTE en formato JSON con la siguiente est
 
       // 3. Llamar a la API de Google Gemini
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-2.5-flash",
+        generationConfig: { responseMimeType: "application/json" }
+      });
       
       const result = await model.generateContent(prompt);
       const textResponse = result.response.text();
+      const jsonResponse = JSON.parse(textResponse);
       
-      // 4. Parsear JSON estricto
-      let cleanText = textResponse.trim();
-      if (cleanText.startsWith('```json')) {
-        cleanText = cleanText.replace(/```json/g, '').replace(/```/g, '').trim();
-      } else if (cleanText.startsWith('```')) {
-        cleanText = cleanText.replace(/```/g, '').trim();
-      }
+      coachCache.set(usuario_id, {
+        timestamp: Date.now(),
+        data: jsonResponse
+      });
 
-      return JSON.parse(cleanText);
+      return jsonResponse;
 
     } catch (error) {
       console.error('Error en Smart Coach Service:', error);

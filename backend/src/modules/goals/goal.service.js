@@ -1,4 +1,5 @@
 import pool from '../../config/database.js';
+import { appEvents } from '../../utils/eventEmitter.js';
 
 export const goalService = {
   createGoal: async ({ usuario_id, nombre, monto_objetivo, cuenta_id }) => {
@@ -10,6 +11,7 @@ export const goalService = {
     const values = [usuario_id, nombre, monto_objetivo, cuenta_id];
     try {
       const result = await pool.query(query, values);
+      appEvents.emit('goal:changed', usuario_id);
       return result.rows[0];
     } catch (error) {
       console.error('Error al crear meta de ahorro:', error.message);

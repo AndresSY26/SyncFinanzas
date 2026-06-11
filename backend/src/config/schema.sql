@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS budgets (
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE NOT NULL,
     recurrencia VARCHAR(50) DEFAULT 'none',
+    notificacion_enviada BOOLEAN DEFAULT false,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -50,6 +51,7 @@ CREATE TABLE IF NOT EXISTS savings_goals (
     monto_objetivo NUMERIC(15, 2) NOT NULL,
     monto_actual NUMERIC(15, 2) DEFAULT 0,
     cuenta_id UUID REFERENCES accounts(id) ON DELETE SET NULL,
+    notificacion_enviada BOOLEAN DEFAULT false,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
